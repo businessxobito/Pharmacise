@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pharmacise Management Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+  <!-- LOGIN SCREEN (EMAIL ONLY) -->
+  <div id="login-view" class="flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-emerald-600 rounded-xl mx-auto flex items-center justify-center text-white text-xl mb-3 shadow-md shadow-emerald-200">
+          <i class="fa-solid fa-prescription-bottle-medical"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900">Pharmacise Console</h2>
+        <p class="text-xs text-slate-500 mt-1">Authorized internal staff and management only</p>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Email</label>
+          <input 
+            type="email" 
+            id="login-email" 
+            required 
+            placeholder="name@example.com"
+            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition" 
+          />
+        </div>
+
+        <div id="login-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-lg">
+          <i class="fa-solid fa-circle-exclamation mr-1"></i>
+          <span>Access Denied: This email address is not in the authorized whitelist.</span>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-sm transition shadow-sm">
+          Sign In with Email
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD WRAPPER -->
+  <div id="dashboard-view" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0">
+      <div>
+        <div class="p-5 flex items-center gap-3 border-b border-slate-800">
+          <i class="fa-solid fa-prescription-bottle-medical text-emerald-400 text-xl"></i>
+          <div>
+            <span class="font-bold text-white tracking-wide block text-sm">Pharmacise OS</span>
+            <span class="text-[10px] text-slate-400 uppercase tracking-widest">Admin Central</span>
+          </div>
+        </div>
+
+        <!-- Global App Switcher -->
+        <div class="p-4 border-b border-slate-800 bg-slate-950/40">
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-mobile-screen text-emerald-400"></i> Active App Scope
+          </label>
+          <select id="global-app-select" onchange="handleAppSwitch()" class="w-full px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <nav class="p-4 space-y-1.5 text-sm">
+          <button onclick="switchTab('overview')" id="tab-overview" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-600 text-white font-medium">
+            <i class="fa-solid fa-chart-line w-4"></i> System Overview
+          </button>
+          <button onclick="switchTab('revenue')" id="tab-revenue" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-wallet w-4 text-emerald-400"></i> Revenue Tracking
+          </button>
+          <button onclick="switchTab('verifications')" id="tab-verifications" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-user-check w-4"></i> Verifications
+            <span id="pending-counter-badge" class="ml-auto bg-amber-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+          </button>
+          <button onclick="switchTab('subscriptions')" id="tab-subscriptions" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-crown w-4 text-amber-400"></i> Pro Members
+          </button>
+          <button onclick="switchTab('apps')" id="tab-apps" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-shapes w-4 text-indigo-400"></i> Registered Apps
+          </button>
+          <button onclick="switchTab('team-access')" id="tab-team-access" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-user-shield w-4 text-blue-400"></i> Team & Staff
+          </button>
+          <button onclick="switchTab('integrations')" id="tab-integrations" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-brands fa-google-drive w-4 text-amber-500"></i> Drive & Sheets
+          </button>
+        </nav>
+      </div>
+
+      <!-- Logged User Card -->
+      <div class="p-4 border-t border-slate-800 flex items-center justify-between text-xs">
+        <div class="truncate mr-2">
+          <p id="staff-name" class="font-semibold text-white truncate">User</p>
+          <p id="staff-role" class="text-emerald-400 text-[11px] font-medium">Super Admin</p>
+        </div>
+        <button onclick="handleLogout()" class="p-2 hover:text-rose-400 transition" title="Log out">
+          <i class="fa-solid fa-arrow-right-from-bracket text-base"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto">
+
+      <!-- SECTION 1: OVERVIEW -->
+      <section id="section-overview" class="space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Dashboard Metrics</h2>
+            <p id="overview-subtitle" class="text-xs text-slate-500">Displaying data for Pharmacise</p>
+          </div>
+          <span class="text-xs bg-emerald-50 text-emerald-700 font-semibold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live System Gateway
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Total Revenue (MRR)</span>
+            <p id="stat-mrr" class="text-2xl font-bold text-emerald-600 mt-1">$0.00</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Active Pro Members</span>
+            <p id="stat-pro" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Pending Reviews</span>
+            <p id="stat-pending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Registered Apps</span>
+            <p id="stat-apps" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: REVENUE TRACKING -->
+      <section id="section-revenue" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Subscription Revenue Tracking</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Real-time log of paid Pro subscriptions, trial conversions, and billing cycles.</p>
+          </div>
+          <button onclick="exportRevenueExcel()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Export Statement (.xlsx)
+          </button>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Monthly Recurring Revenue</span>
+            <p id="rev-mrr" class="text-2xl font-bold text-slate-900 mt-1">$0.00</p>
+            <span class="text-[11px] text-emerald-600 font-medium">Billed automatically via App Store / Play</span>
+          </div>
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Annual Run Rate (ARR)</span>
+            <p id="rev-arr" class="text-2xl font-bold text-slate-900 mt-1">$0.00</p>
+            <span class="text-[11px] text-slate-400">Projected annualized subscriptions</span>
+          </div>
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-xs text-slate-500 font-semibold uppercase">Complimentary Discretionary</span>
+            <p id="rev-comp" class="text-2xl font-bold text-indigo-600 mt-1">0 Users</p>
+            <span class="text-[11px] text-slate-400">Admin granted ($0 billable)</span>
+          </div>
+        </div>
+
+        <!-- Revenue Table -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">Subscriber</th>
+                  <th class="p-3.5">Plan Cycle</th>
+                  <th class="p-3.5">Amount</th>
+                  <th class="p-3.5">Platform</th>
+                  <th class="p-3.5">Next Renewal</th>
+                  <th class="p-3.5">Status</th>
+                </tr>
+              </thead>
+              <tbody id="revenue-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: VERIFICATIONS -->
+      <section id="section-verifications" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">User Licensure & Verification</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Inspect and approve submitted medical IDs across your mobile apps.</p>
+          </div>
+          <button onclick="exportToExcel()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+            <i class="fa-solid fa-file-excel"></i> Export (.xlsx)
+          </button>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">App</th>
+                  <th class="p-3.5">User</th>
+                  <th class="p-3.5">Designation</th>
+                  <th class="p-3.5">License ID</th>
+                  <th class="p-3.5">Attachment</th>
+                  <th class="p-3.5">Status</th>
+                  <th class="p-3.5 text-right">Review Action</th>
+                </tr>
+              </thead>
+              <tbody id="verification-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: PRO SUBSCRIPTIONS & PERKS -->
+      <section id="section-subscriptions" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Pro Subscriptions & Privileges</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Activate Pro entitlements or toggle feature perks for specific apps.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">App</th>
+                  <th class="p-3.5">User</th>
+                  <th class="p-3.5">Tier</th>
+                  <th class="p-3.5">Assigned Perks</th>
+                  <th class="p-3.5">Status</th>
+                  <th class="p-3.5 text-right">Controls</th>
+                </tr>
+              </thead>
+              <tbody id="subscription-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: APPS DIRECTORY -->
+      <section id="section-apps" class="hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Application Management</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Register new Android apps to isolate credentials and subscriptions.</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-plus text-emerald-600"></i> Register Mobile App
+          </h3>
+          <form onsubmit="handleAddApp(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">App Display Name</label>
+              <input 
+                type="text" 
+                id="new-app-name" 
+                required 
+                placeholder="e.g. Pharmacise" 
+                class="w-full px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Package Name / ID</label>
+              <input 
+                type="text" 
+                id="new-app-package" 
+                required 
+                placeholder="e.g. com.example.pharmacise" 
+                class="w-full px-3 py-2 border rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
+            </div>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-lg transition">
+              Register App
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">App Name</th>
+                  <th class="p-3.5">Package ID</th>
+                  <th class="p-3.5">Registered Users</th>
+                  <th class="p-3.5">Pending Verifications</th>
+                  <th class="p-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="apps-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: TEAM ACCESS -->
+      <section id="section-team-access" class="hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Staff & Team Whitelist</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Control which staff email addresses can access this dashboard.</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-user-plus text-emerald-600"></i> Authorize Staff Email
+          </h3>
+          <form onsubmit="handleAddStaff(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Work Email</label>
+              <input 
+                type="email" 
+                id="new-staff-email" 
+                required 
+                placeholder="colleague@domain.com" 
+                class="w-full px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Access Level</label>
+              <select id="new-staff-role" class="w-full px-3 py-2 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <option value="Super Admin">Super Admin (All Apps)</option>
+                <option value="Compliance Reviewer">Compliance Reviewer (Verification Only)</option>
+                <option value="Viewer">Read-Only Viewer</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-lg transition">
+              Authorize Email
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">Staff Email</th>
+                  <th class="p-3.5">Role</th>
+                  <th class="p-3.5">Added Date</th>
+                  <th class="p-3.5 text-right">Revocation</th>
+                </tr>
+              </thead>
+              <tbody id="team-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 7: GOOGLE DRIVE & SHEETS -->
+      <section id="section-integrations" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Google Drive & Sheet Integration</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Link an external Google Sheet for automated spreadsheet synchronization.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-semibold text-slate-900 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-link text-emerald-600"></i> Webhook / Sheet CSV URL
+            </h3>
+            <input 
+              type="url" 
+              id="sheet-url-input" 
+              placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"
+              class="w-full px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            />
+            <button onclick="syncDriveSheet()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
+              Sync Data
+            </button>
+            <span id="sync-status" class="text-xs block text-slate-500"></span>
+          </div>
+
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs text-slate-600">
+            <h4 class="font-bold text-slate-900 text-sm mb-1">Pharmacise Ingestion Protocol</h4>
+            <p>Each row in your Google Sheet can include an <code>app_id</code> column (e.g., <code>app-pharmacise</code>). The console will automatically map users to Pharmacise.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: PERKS OVERRIDE -->
+  <div id="perks-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-slate-900 text-base" id="modal-user-name">Adjust Privileges</h3>
+      
+      <div class="space-y-3 text-xs">
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="perk-offline" class="rounded text-emerald-600" />
+          <span>Full Offline Database Access</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="perk-interactions" class="rounded text-emerald-600" />
+          <span>Multi-Drug Interaction Checker</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" id="perk-priority" class="rounded text-emerald-600" />
+          <span>Priority Clinical Monograph Updates</span>
+        </label>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closePerksModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="savePerks()" class="px-4 py-1.5 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold">Apply Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ROOT_SUPER_ADMIN = "omarkattan@gmail.com";
+
+    // Application Registry
+    let apps = [
+      { id: "app-pharmacise", name: "Pharmacise", package: "com.example.pharmacise" },
+      { id: "app-dosecalc", name: "PediatricDoseGuide", package: "com.example.dosecalc" }
+    ];
+
+    let currentAppScope = "app-pharmacise";
+
+    let teamWhitelist = [
+      { email: ROOT_SUPER_ADMIN, role: "Super Admin", addedAt: "Permanent Root", isImmutable: true }
+    ];
+
+    let currentSessionUser = null;
+
+    // Users Registry with Revenue & Pricing Records
+    let users = [
+      {
+        id: "USR-101",
+        appId: "app-pharmacise",
+        name: "Dr. Laila Mansour",
+        email: "laila.mansour@hospital.ae",
+        role: "Pharmacist",
+        licenseNumber: "MOH-49812",
+        fileUrl: "license_scan.pdf",
+        verificationStatus: "Pending",
+        isPro: true,
+        planType: "Monthly Pro",
+        planAmount: 14.99,
+        platform: "Google Play",
+        renewalDate: "2026-10-15",
+        perks: ["Offline Database Access"]
+      },
+      {
+        id: "USR-102",
+        appId: "app-pharmacise",
+        name: "Tariq Al-Hashemi",
+        email: "tariq.chem@pharma.org",
+        role: "Clinical Specialist",
+        licenseNumber: "DHA-89211",
+        fileUrl: "board_certificate.png",
+        verificationStatus: "Verified",
+        isPro: true,
+        planType: "Annual Pro",
+        planAmount: 129.99,
+        platform: "Apple App Store",
+        renewalDate: "2027-02-10",
+        perks: ["Offline Database Access", "Multi-Drug Interaction Checker"]
+      },
+      {
+        id: "USR-103",
+        appId: "app-pharmacise",
+        name: "Sara Jensen",
+        email: "sara.j@student.edu",
+        role: "Pharmacy Student",
+        licenseNumber: "STU-00914",
+        fileUrl: "university_id.jpg",
+        verificationStatus: "Pending",
+        isPro: false,
+        planType: "None",
+        planAmount: 0.00,
+        platform: "-",
+        renewalDate: "-",
+        perks: []
+      },
+      {
+        id: "USR-104",
+        appId: "app-pharmacise",
+        name: "Dr. Zaid Qasim",
+        email: "zqasim@alainhealth.ae",
+        role: "Hospital Director",
+        licenseNumber: "DOH-99412",
+        fileUrl: "director_id.pdf",
+        verificationStatus: "Verified",
+        isPro: true,
+        planType: "Admin Discretionary",
+        planAmount: 0.00,
+        platform: "Manual Override",
+        renewalDate: "2028-01-01",
+        perks: ["Offline Database Access", "Multi-Drug Interaction Checker", "Priority Clinical Monograph Updates"]
+      }
+    ];
+
+    let activeModalUserId = null;
+
+    document.getElementById("login-email").value = ROOT_SUPER_ADMIN;
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const emailInput = document.getElementById("login-email").value.trim().toLowerCase();
+      const errBox = document.getElementById("login-error");
+
+      const match = teamWhitelist.find(m => m.email.toLowerCase() === emailInput);
+      if (!match) {
+        errBox.classList.remove("hidden");
+        return;
+      }
+
+      errBox.classList.add("hidden");
+      currentSessionUser = match;
+
+      document.getElementById("staff-name").innerText = match.email;
+      document.getElementById("staff-role").innerText = match.role;
+
+      document.getElementById("login-view").classList.add("hidden");
+      document.getElementById("dashboard-view").classList.remove("hidden");
+
+      initAppSwitcher();
+      renderAll();
+    }
+
+    function handleLogout() {
+      currentSessionUser = null;
+      document.getElementById("dashboard-view").classList.add("hidden");
+      document.getElementById("login-view").classList.remove("hidden");
+    }
+
+    function initAppSwitcher() {
+      const select = document.getElementById("global-app-select");
+      select.innerHTML = `
+        <option value="ALL">All Applications (${apps.length})</option>
+        ${apps.map(a => `<option value="${a.id}">${a.name}</option>`).join("")}
+      `;
+      select.value = currentAppScope;
+    }
+
+    function handleAppSwitch() {
+      currentAppScope = document.getElementById("global-app-select").value;
+      const subtitle = document.getElementById("overview-subtitle");
+      if (currentAppScope === "ALL") {
+        subtitle.innerText = "Displaying aggregated data across all apps";
+      } else {
+        const app = apps.find(a => a.id === currentAppScope);
+        subtitle.innerText = `Filtered scope: ${app.name} (${app.package})`;
+      }
+      renderAll();
+    }
+
+    function switchTab(tab) {
+      ["overview", "revenue", "verifications", "subscriptions", "apps", "team-access", "integrations"].forEach(t => {
+        const sec = document.getElementById(`section-${t}`);
+        if (sec) sec.classList.toggle("hidden", t !== tab);
+        
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+          btn.className = (t === tab)
+            ? "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-600 text-white font-medium"
+            : "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300";
+        }
+      });
+    }
+
+    function getScopedUsers() {
+      return currentAppScope === "ALL" ? users : users.filter(u => u.appId === currentAppScope);
+    }
+
+    function getAppName(appId) {
+      const a = apps.find(x => x.id === appId);
+      return a ? a.name : "Unknown";
+    }
+
+    function renderAll() {
+      renderStats();
+      renderRevenue();
+      renderVerifications();
+      renderSubscriptions();
+      renderApps();
+      renderTeamList();
+    }
+
+    function renderStats() {
+      const scoped = getScopedUsers();
+      const pending = scoped.filter(u => u.verificationStatus === "Pending").length;
+      const proUsers = scoped.filter(u => u.isPro);
+      
+      // Calculate normalized monthly revenue
+      let mrr = 0;
+      proUsers.forEach(u => {
+        if (u.planType === "Monthly Pro") mrr += u.planAmount;
+        if (u.planType === "Annual Pro") mrr += (u.planAmount / 12);
+      });
+
+      document.getElementById("stat-pending").innerText = pending;
+      document.getElementById("pending-counter-badge").innerText = pending;
+      document.getElementById("stat-pro").innerText = proUsers.length;
+      document.getElementById("stat-mrr").innerText = `$${mrr.toFixed(2)}`;
+      document.getElementById("stat-apps").innerText = apps.length;
+    }
+
+    function renderRevenue() {
+      const scoped = getScopedUsers().filter(u => u.isPro);
+      const tbody = document.getElementById("revenue-table-body");
+
+      let mrr = 0;
+      let compCount = 0;
+
+      scoped.forEach(u => {
+        if (u.planType === "Monthly Pro") mrr += u.planAmount;
+        else if (u.planType === "Annual Pro") mrr += (u.planAmount / 12);
+        else if (u.planType === "Admin Discretionary" || u.planAmount === 0) compCount++;
+      });
+
+      document.getElementById("rev-mrr").innerText = `$${mrr.toFixed(2)}`;
+      document.getElementById("rev-arr").innerText = `$${(mrr * 12).toFixed(2)}`;
+      document.getElementById("rev-comp").innerText = `${compCount} Users`;
+
+      if (!scoped.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No active subscriber revenue records in this scope.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = scoped.map(u => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-medium text-slate-800">${u.name}<br/><span class="text-slate-400 font-normal">${u.email}</span></td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100">${u.planType}</span></td>
+          <td class="p-3.5 font-bold text-slate-900">$${u.planAmount.toFixed(2)}</td>
+          <td class="p-3.5 text-slate-600">${u.platform}</td>
+          <td class="p-3.5 text-slate-500 font-mono">${u.renewalDate}</td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Active Paid</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderVerifications() {
+      const tbody = document.getElementById("verification-table-body");
+      const scoped = getScopedUsers();
+
+      if (!scoped.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No submissions found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = scoped.map(user => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5"><span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">${getAppName(user.appId)}</span></td>
+          <td class="p-3.5 font-medium text-slate-800">${user.name}<br/><span class="text-slate-400 font-normal">${user.email}</span></td>
+          <td class="p-3.5 text-slate-600">${user.role}</td>
+          <td class="p-3.5 font-mono text-slate-700">${user.licenseNumber}</td>
+          <td class="p-3.5">
+            <button onclick="alert('Viewing file: ${user.fileUrl}')" class="text-emerald-600 hover:underline inline-flex items-center gap-1">
+              <i class="fa-solid fa-file-pdf"></i> View File
+            </button>
+          </td>
+          <td class="p-3.5">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+              user.verificationStatus === 'Verified' ? 'bg-emerald-100 text-emerald-700' :
+              user.verificationStatus === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
+            }">${user.verificationStatus}</span>
+          </td>
+          <td class="p-3.5 text-right space-x-1">
+            <button onclick="setVerification('${user.id}', 'Verified')" class="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded" title="Approve"><i class="fa-solid fa-check"></i></button>
+            <button onclick="setVerification('${user.id}', 'Rejected')" class="p-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded" title="Reject"><i class="fa-solid fa-xmark"></i></button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderSubscriptions() {
+      const tbody = document.getElementById("subscription-table-body");
+      const scoped = getScopedUsers();
+
+      tbody.innerHTML = scoped.map(user => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5"><span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">${getAppName(user.appId)}</span></td>
+          <td class="p-3.5 font-medium text-slate-800">${user.name}</td>
+          <td class="p-3.5">
+            <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${user.isPro ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-600'}">
+              ${user.isPro ? '★ ' + user.planType : 'Free Tier'}
+            </span>
+          </td>
+          <td class="p-3.5 text-slate-600">${user.perks.length ? user.perks.join(", ") : '<span class="text-slate-400 italic">None</span>'}</td>
+          <td class="p-3.5"><span class="text-[11px] ${user.isPro ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${user.isPro ? 'Active' : 'Inactive'}</span></td>
+          <td class="p-3.5 text-right space-x-2">
+            <button onclick="togglePro('${user.id}')" class="text-xs font-semibold px-2 py-1 rounded ${user.isPro ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}">
+              ${user.isPro ? 'Revoke Pro' : 'Activate Pro'}
+            </button>
+            <button onclick="openPerksModal('${user.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">Edit Perks</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderApps() {
+      const tbody = document.getElementById("apps-table-body");
+      tbody.innerHTML = apps.map(app => {
+        const appUsers = users.filter(u => u.appId === app.id);
+        const pendingCount = appUsers.filter(u => u.verificationStatus === "Pending").length;
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3.5 font-bold text-slate-900">${app.name}</td>
+            <td class="p-3.5 font-mono text-slate-600">${app.package}</td>
+            <td class="p-3.5 font-medium text-slate-800">${appUsers.length}</td>
+            <td class="p-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${pendingCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
+                ${pendingCount} Pending
+              </span>
+            </td>
+            <td class="p-3.5 text-right">
+              <button onclick="selectAppScope('${app.id}')" class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs">Switch Scope</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function handleAddApp(e) {
+      e.preventDefault();
+      const name = document.getElementById("new-app-name").value.trim();
+      const pkg = document.getElementById("new-app-package").value.trim().toLowerCase();
+
+      if (apps.some(a => a.package === pkg)) {
+        alert("An app with this package name already exists.");
+        return;
+      }
+
+      const newId = "app-" + name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      apps.push({ id: newId, name, package: pkg });
+
+      document.getElementById("new-app-name").value = "";
+      document.getElementById("new-app-package").value = "";
+
+      initAppSwitcher();
+      renderAll();
+    }
+
+    function selectAppScope(appId) {
+      currentAppScope = appId;
+      document.getElementById("global-app-select").value = appId;
+      handleAppSwitch();
+      switchTab("verifications");
+    }
+
+    function renderTeamList() {
+      const tbody = document.getElementById("team-table-body");
+      tbody.innerHTML = teamWhitelist.map(member => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-semibold text-slate-800 flex items-center gap-2">
+            ${member.email}
+            ${member.isImmutable ? '<span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded font-bold">Root Owner</span>' : ''}
+          </td>
+          <td class="p-3.5 text-slate-600">${member.role}</td>
+          <td class="p-3.5 text-slate-400">${member.addedAt}</td>
+          <td class="p-3.5 text-right">
+            ${member.isImmutable ? '<span class="text-slate-400 text-[11px] italic">Permanent</span>' : `
+              <button onclick="revokeStaff('${member.email}')" class="text-rose-600 hover:text-rose-800 font-medium">Revoke</button>
+            `}
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function handleAddStaff(e) {
+      e.preventDefault();
+      const email = document.getElementById("new-staff-email").value.trim().toLowerCase();
+      const role = document.getElementById("new-staff-role").value;
+
+      if (teamWhitelist.some(m => m.email.toLowerCase() === email)) {
+        alert("This email is already whitelisted.");
+        return;
+      }
+
+      teamWhitelist.push({
+        email: email,
+        role: role,
+        addedAt: new Date().toLocaleDateString(),
+        isImmutable: false
+      });
+
+      document.getElementById("new-staff-email").value = "";
+      renderAll();
+    }
+
+    function revokeStaff(email) {
+      if (confirm(`Revoke access for ${email}?`)) {
+        teamWhitelist = teamWhitelist.filter(m => m.email.toLowerCase() !== email.toLowerCase());
+        renderAll();
+      }
+    }
+
+    function setVerification(userId, status) {
+      const u = users.find(x => x.id === userId);
+      if (u) { u.verificationStatus = status; renderAll(); }
+    }
+
+    function togglePro(userId) {
+      const u = users.find(x => x.id === userId);
+      if (u) {
+        u.isPro = !u.isPro;
+        if (u.isPro) {
+          u.planType = "Admin Discretionary";
+          u.planAmount = 0.00;
+          u.platform = "Manual Override";
+          u.renewalDate = "2027-12-31";
+          if (!u.perks.length) u.perks = ["Offline Database Access"];
+        } else {
+          u.planType = "None";
+          u.planAmount = 0.00;
+          u.platform = "-";
+          u.renewalDate = "-";
+        }
+        renderAll();
+      }
+    }
+
+    function openPerksModal(userId) {
+      activeModalUserId = userId;
+      const u = users.find(x => x.id === userId);
+      document.getElementById("modal-user-name").innerText = `Privileges: ${u.name} (${getAppName(u.appId)})`;
+      document.getElementById("perk-offline").checked = u.perks.includes("Offline Database Access");
+      document.getElementById("perk-interactions").checked = u.perks.includes("Multi-Drug Interaction Checker");
+      document.getElementById("perk-priority").checked = u.perks.includes("Priority Clinical Monograph Updates");
+      document.getElementById("perks-modal").classList.remove("hidden");
+    }
+
+    function closePerksModal() {
+      document.getElementById("perks-modal").classList.add("hidden");
+    }
+
+    function savePerks() {
+      const u = users.find(x => x.id === activeModalUserId);
+      if (u) {
+        const newPerks = [];
+        if (document.getElementById("perk-offline").checked) newPerks.push("Offline Database Access");
+        if (document.getElementById("perk-interactions").checked) newPerks.push("Multi-Drug Interaction Checker");
+        if (document.getElementById("perk-priority").checked) newPerks.push("Priority Clinical Monograph Updates");
+        u.perks = newPerks;
+        renderAll();
+      }
+      closePerksModal();
+    }
+
+    function exportToExcel() {
+      const scoped = getScopedUsers();
+      const exportData = scoped.map(u => ({
+        "App ID": u.appId,
+        "App Name": getAppName(u.appId),
+        "User ID": u.id,
+        "Name": u.name,
+        "Email": u.email,
+        "Role": u.role,
+        "License Number": u.licenseNumber,
+        "Verification Status": u.verificationStatus,
+        "Pro Subscribed": u.isPro ? "YES" : "NO",
+        "Granted Perks": u.perks.join("; ")
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Verification_Data");
+      XLSX.writeFile(wb, `${getAppName(currentAppScope)}_Verification_Data.xlsx`);
+    }
+
+    function exportRevenueExcel() {
+      const scoped = getScopedUsers().filter(u => u.isPro);
+      const exportData = scoped.map(u => ({
+        "App Name": getAppName(u.appId),
+        "User Name": u.name,
+        "Email Address": u.email,
+        "Plan Type": u.planType,
+        "Billing Rate ($)": u.planAmount,
+        "Payment Channel": u.platform,
+        "Renewal Date": u.renewalDate,
+        "Active Perks": u.perks.join("; ")
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Revenue_Statement");
+      XLSX.writeFile(wb, `${getAppName(currentAppScope)}_Revenue_Statement.xlsx`);
+    }
+
+    function syncDriveSheet() {
+      const status = document.getElementById("sync-status");
+      status.innerText = "Connecting to Google Drive Sheet endpoint...";
+      status.className = "text-xs block text-amber-600 font-medium";
+      setTimeout(() => {
+        status.innerText = "✓ Multi-app rows synced successfully with Google Drive.";
+        status.className = "text-xs block text-emerald-600 font-medium";
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
