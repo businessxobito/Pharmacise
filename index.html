@@ -21,27 +21,17 @@
         <p class="text-xs text-slate-500 mt-1">Authorized internal staff and management only</p>
       </div>
 
-      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Email</label>
-          <input 
-            type="email" 
-            id="login-email" 
-            required 
-            placeholder="name@example.com"
-            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition" 
-          />
-        </div>
-
+      <div class="space-y-4">
         <div id="login-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 p-2.5 rounded-lg">
           <i class="fa-solid fa-circle-exclamation mr-1"></i>
-          <span>Access Denied: This email address is not in the authorized whitelist.</span>
+          <span id="login-error-text">Access denied.</span>
         </div>
 
-        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-sm transition shadow-sm">
-          Sign In with Email
+        <button id="google-signin-btn" onclick="signInWithGoogle()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-sm transition shadow-sm inline-flex items-center justify-center gap-2">
+          <i class="fa-brands fa-google"></i> Sign in with Google
         </button>
-      </form>
+        <p class="text-[11px] text-slate-400 text-center">Access is limited to staff accounts added by an administrator.</p>
+      </div>
     </div>
   </div>
 
@@ -86,6 +76,9 @@
           <button onclick="switchTab('apps')" id="tab-apps" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-shapes w-4 text-indigo-400"></i> Registered Apps
           </button>
+          <button onclick="switchTab('news')" id="tab-news" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-newspaper w-4 text-sky-400"></i> App News
+          </button>
           <button onclick="switchTab('team-access')" id="tab-team-access" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-user-shield w-4 text-blue-400"></i> Team & Staff
           </button>
@@ -120,6 +113,12 @@
           <span class="text-xs bg-emerald-50 text-emerald-700 font-semibold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live System Gateway
           </span>
+        </div>
+
+        <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg">
+          <i class="fa-solid fa-flask mr-1"></i>
+          Revenue, Verifications, Pro Members, Registered Apps and Drive &amp; Sheets show <b>sample data</b> and are not saved yet.
+          <b>App News</b> and <b>Team &amp; Staff</b> are live and saved to Firebase.
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -307,11 +306,89 @@
         </div>
       </section>
 
+      <!-- SECTION: APP NEWS (Firestore "news" collection, read by the Android app) -->
+      <section id="section-news" class="hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">App News</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Published items appear in the app's News &amp; Safety Alerts within a few hours (immediately when a user taps refresh). FDA recalls and approvals are added automatically; use this for your own and Gulf news.</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 id="news-form-title" class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-emerald-600"></i> New news item
+          </h3>
+          <form id="news-form" onsubmit="saveNews(event)" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Title <span class="text-slate-400 font-normal">(max 200)</span></label>
+              <input type="text" id="news-title" required maxlength="200" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Summary <span class="text-slate-400 font-normal">(shown on the card, max 600)</span></label>
+              <textarea id="news-summary" maxlength="600" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Full text <span class="text-slate-400 font-normal">(optional, shown when opened, max 5000)</span></label>
+              <textarea id="news-body" maxlength="5000" rows="4" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+              <input type="text" id="news-category" list="news-category-options" required maxlength="40" value="Announcement" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+              <datalist id="news-category-options">
+                <option value="Announcement"></option>
+                <option value="SFDA"></option>
+                <option value="Recall"></option>
+                <option value="Shortage"></option>
+                <option value="Approval"></option>
+                <option value="Safety alert"></option>
+                <option value="Guideline"></option>
+              </datalist>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Source link <span class="text-slate-400 font-normal">(optional, https://)</span></label>
+              <input type="url" id="news-url" pattern="https://.+" placeholder="https://www.sfda.gov.sa/en/news/..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-700">
+              <input type="checkbox" id="news-urgent" class="rounded text-rose-600" />
+              <span><b>Urgent</b> (shown in red, e.g. a Class I recall)</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs text-slate-700">
+              <input type="checkbox" id="news-published" class="rounded text-emerald-600" checked />
+              <span><b>Published</b> (untick to save as a draft that the app does not show)</span>
+            </label>
+            <div class="md:col-span-2 flex items-center gap-2">
+              <button type="submit" id="news-save-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition">Save</button>
+              <button type="button" id="news-cancel-btn" onclick="resetNewsForm()" class="hidden text-xs text-slate-600 hover:bg-slate-100 px-3 py-2.5 rounded-lg">Cancel editing</button>
+              <span id="news-status" class="text-xs text-slate-500"></span>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">Date</th>
+                  <th class="p-3.5">Title</th>
+                  <th class="p-3.5">Category</th>
+                  <th class="p-3.5">Status</th>
+                  <th class="p-3.5">Last edited by</th>
+                  <th class="p-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="news-table-body" class="divide-y divide-slate-100">
+                <tr><td colspan="6" class="p-4 text-center text-slate-400">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- SECTION 6: TEAM ACCESS -->
       <section id="section-team-access" class="hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-slate-900">Staff & Team Whitelist</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Control which staff email addresses can access this dashboard.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Control which Google accounts can sign in to this dashboard. Only the owner can add or remove Super Admins.</p>
         </div>
 
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -332,6 +409,7 @@
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Access Level</label>
               <select id="new-staff-role" class="w-full px-3 py-2 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <option value="News Editor">News Editor (App News only)</option>
                 <option value="Super Admin">Super Admin (All Apps)</option>
                 <option value="Compliance Reviewer">Compliance Reviewer (Verification Only)</option>
                 <option value="Viewer">Read-Only Viewer</option>
@@ -422,9 +500,10 @@
   </div>
 
   <script>
-    const ROOT_SUPER_ADMIN = "omarkattan@gmail.com";
+    // Sign-in, roles, the team list and App News live in the Firebase module script
+    // at the end of this page.
 
-    // Application Registry
+    // Application Registry (sample data)
     let apps = [
       { id: "app-pharmacise", name: "Pharmacise", package: "com.example.pharmacise" },
       { id: "app-dosecalc", name: "PediatricDoseGuide", package: "com.example.dosecalc" }
@@ -432,13 +511,7 @@
 
     let currentAppScope = "app-pharmacise";
 
-    let teamWhitelist = [
-      { email: ROOT_SUPER_ADMIN, role: "Super Admin", addedAt: "Permanent Root", isImmutable: true }
-    ];
-
-    let currentSessionUser = null;
-
-    // Users Registry with Revenue & Pricing Records
+    // Users Registry with Revenue & Pricing Records (sample data)
     let users = [
       {
         id: "USR-101",
@@ -508,38 +581,6 @@
 
     let activeModalUserId = null;
 
-    document.getElementById("login-email").value = ROOT_SUPER_ADMIN;
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const emailInput = document.getElementById("login-email").value.trim().toLowerCase();
-      const errBox = document.getElementById("login-error");
-
-      const match = teamWhitelist.find(m => m.email.toLowerCase() === emailInput);
-      if (!match) {
-        errBox.classList.remove("hidden");
-        return;
-      }
-
-      errBox.classList.add("hidden");
-      currentSessionUser = match;
-
-      document.getElementById("staff-name").innerText = match.email;
-      document.getElementById("staff-role").innerText = match.role;
-
-      document.getElementById("login-view").classList.add("hidden");
-      document.getElementById("dashboard-view").classList.remove("hidden");
-
-      initAppSwitcher();
-      renderAll();
-    }
-
-    function handleLogout() {
-      currentSessionUser = null;
-      document.getElementById("dashboard-view").classList.add("hidden");
-      document.getElementById("login-view").classList.remove("hidden");
-    }
-
     function initAppSwitcher() {
       const select = document.getElementById("global-app-select");
       select.innerHTML = `
@@ -562,15 +603,18 @@
     }
 
     function switchTab(tab) {
-      ["overview", "revenue", "verifications", "subscriptions", "apps", "team-access", "integrations"].forEach(t => {
+      ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "team-access", "integrations"].forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         if (sec) sec.classList.toggle("hidden", t !== tab);
         
         const btn = document.getElementById(`tab-${t}`);
         if (btn) {
+          // Keep tabs hidden that the signed-in role may not use
+          const hiddenForRole = btn.classList.contains("hidden");
           btn.className = (t === tab)
             ? "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-600 text-white font-medium"
             : "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300";
+          if (hiddenForRole) btn.classList.add("hidden");
         }
       });
     }
@@ -590,7 +634,7 @@
       renderVerifications();
       renderSubscriptions();
       renderApps();
-      renderTeamList();
+      // The team list is kept up to date by the Firebase module
     }
 
     function renderStats() {
@@ -755,53 +799,6 @@
       switchTab("verifications");
     }
 
-    function renderTeamList() {
-      const tbody = document.getElementById("team-table-body");
-      tbody.innerHTML = teamWhitelist.map(member => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="p-3.5 font-semibold text-slate-800 flex items-center gap-2">
-            ${member.email}
-            ${member.isImmutable ? '<span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded font-bold">Root Owner</span>' : ''}
-          </td>
-          <td class="p-3.5 text-slate-600">${member.role}</td>
-          <td class="p-3.5 text-slate-400">${member.addedAt}</td>
-          <td class="p-3.5 text-right">
-            ${member.isImmutable ? '<span class="text-slate-400 text-[11px] italic">Permanent</span>' : `
-              <button onclick="revokeStaff('${member.email}')" class="text-rose-600 hover:text-rose-800 font-medium">Revoke</button>
-            `}
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    function handleAddStaff(e) {
-      e.preventDefault();
-      const email = document.getElementById("new-staff-email").value.trim().toLowerCase();
-      const role = document.getElementById("new-staff-role").value;
-
-      if (teamWhitelist.some(m => m.email.toLowerCase() === email)) {
-        alert("This email is already whitelisted.");
-        return;
-      }
-
-      teamWhitelist.push({
-        email: email,
-        role: role,
-        addedAt: new Date().toLocaleDateString(),
-        isImmutable: false
-      });
-
-      document.getElementById("new-staff-email").value = "";
-      renderAll();
-    }
-
-    function revokeStaff(email) {
-      if (confirm(`Revoke access for ${email}?`)) {
-        teamWhitelist = teamWhitelist.filter(m => m.email.toLowerCase() !== email.toLowerCase());
-        renderAll();
-      }
-    }
-
     function setVerification(userId, status) {
       const u = users.find(x => x.id === userId);
       if (u) { u.verificationStatus = status; renderAll(); }
@@ -901,6 +898,347 @@
         status.className = "text-xs block text-emerald-600 font-medium";
       }, 1000);
     }
+  </script>
+
+  <!--
+    Firebase: Google sign-in, staff roles and App News.
+    Who may do what is enforced by the Firestore security rules (firestore.rules in
+    the Android app repository); the checks here only decide what the page shows.
+  -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
+      onSnapshot, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+    // Public web config; access is controlled by the security rules
+    const firebaseConfig = {
+      apiKey: "AIzaSyAx0b882KYaODsoyuRhTFBlGdusgRwek-M",
+      authDomain: "pharmacise-x.firebaseapp.com",
+      projectId: "pharmacise-x",
+      storageBucket: "pharmacise-x.firebasestorage.app",
+      messagingSenderId: "1009052309087",
+      appId: "1:1009052309087:web:93db205f64ffaecfa46dea"
+    };
+
+    // Must match owner() in firestore.rules
+    const OWNER_EMAIL = "kattanobito@gmail.com";
+
+    const ALL_TABS = ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "team-access", "integrations"];
+    const TABS_BY_ROLE = {
+      "Owner": ALL_TABS,
+      "Super Admin": ALL_TABS,
+      "News Editor": ["news"],
+      "Compliance Reviewer": ["overview", "verifications"],
+      "Viewer": ["overview", "revenue", "verifications", "subscriptions", "apps", "integrations"]
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    // The Firestore database ID is "default" (not the usual "(default)"); the app uses the same
+    const db = getFirestore(app, "default");
+
+    let session = null;            // { email, role }
+    let unsubscribers = [];
+    let newsItems = [];
+    let editingNewsId = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function formatDate(ts) {
+      if (!ts || !ts.toDate) return "—";
+      return ts.toDate().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    function friendlyError(e) {
+      if (e && e.code === "permission-denied") return "You don't have permission to do that.";
+      return (e && e.message) || String(e);
+    }
+
+    function showLoginError(text) {
+      $("login-error-text").innerText = text;
+      $("login-error").classList.remove("hidden");
+    }
+
+    // ---- Sign-in ----
+
+    window.signInWithGoogle = async () => {
+      $("login-error").classList.add("hidden");
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        if (e.code === "auth/popup-blocked") return signInWithRedirect(auth, provider);
+        if (e.code === "auth/unauthorized-domain") {
+          showLoginError(`This website's domain (${location.hostname}) is not authorized in Firebase Authentication settings.`);
+        } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
+          showLoginError(friendlyError(e));
+        }
+      }
+    };
+
+    window.handleLogout = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (user) => {
+      unsubscribers.forEach(u => u());
+      unsubscribers = [];
+      session = null;
+
+      if (!user) {
+        $("dashboard-view").classList.add("hidden");
+        $("login-view").classList.remove("hidden");
+        return;
+      }
+
+      const email = (user.email || "").toLowerCase();
+      let role = null;
+      if (email === OWNER_EMAIL) {
+        role = "Owner";
+      } else {
+        try {
+          const snap = await getDoc(doc(db, "admins", email));
+          if (snap.exists()) role = snap.data().role;
+        } catch (e) {
+          showLoginError("Could not check your access: " + friendlyError(e));
+        }
+      }
+
+      if (!role || !TABS_BY_ROLE[role]) {
+        await signOut(auth);
+        showLoginError(`${email} is not authorized for this console. Ask an administrator to add it under Team & Staff.`);
+        return;
+      }
+
+      session = { email, role };
+      $("staff-name").innerText = email;
+      $("staff-role").innerText = role;
+      $("login-view").classList.add("hidden");
+      $("dashboard-view").classList.remove("hidden");
+
+      const allowed = TABS_BY_ROLE[role];
+      ALL_TABS.forEach(t => $(`tab-${t}`)?.classList.toggle("hidden", !allowed.includes(t)));
+      initAppSwitcher();
+      renderAll();
+      switchTab(allowed[0]);
+
+      if (allowed.includes("news")) listenToNews();
+      if (allowed.includes("team-access")) listenToTeam();
+    });
+
+    const isSuperAdmin = () => session && (session.role === "Owner" || session.role === "Super Admin");
+
+    // ---- Team & Staff (Firestore "admins" collection, keyed by lower-case email) ----
+
+    let admins = [];
+
+    function listenToTeam() {
+      unsubscribers.push(onSnapshot(collection(db, "admins"), (snap) => {
+        admins = snap.docs.map(d => ({ email: d.id, ...d.data() })).sort((a, b) => a.email.localeCompare(b.email));
+        renderTeamList();
+      }, (e) => {
+        $("team-table-body").innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
+      }));
+    }
+
+    function renderTeamList() {
+      const ownerRow = `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-semibold text-slate-800">${escapeHtml(OWNER_EMAIL)}
+            <span class="ml-2 text-[10px] bg-slate-200 text-slate-700 px-1.5 rounded font-bold">Root Owner</span></td>
+          <td class="p-3.5 text-slate-600">Owner</td>
+          <td class="p-3.5 text-slate-400">—</td>
+          <td class="p-3.5 text-right"><span class="text-slate-400 text-[11px] italic">Permanent</span></td>
+        </tr>`;
+      const rows = admins.map(a => {
+        const canRevoke = session.role === "Owner" || (isSuperAdmin() && a.role !== "Super Admin");
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3.5 font-semibold text-slate-800">${escapeHtml(a.email)}</td>
+            <td class="p-3.5 text-slate-600">${escapeHtml(a.role)}</td>
+            <td class="p-3.5 text-slate-400">${formatDate(a.addedAt)}<br/><span class="text-[10px]">by ${escapeHtml(a.addedBy)}</span></td>
+            <td class="p-3.5 text-right">${canRevoke
+              ? `<button data-email="${escapeHtml(a.email)}" onclick="revokeStaff(this.dataset.email)" class="text-rose-600 hover:text-rose-800 font-medium">Revoke</button>`
+              : '<span class="text-slate-400 text-[11px] italic">Owner only</span>'}</td>
+          </tr>`;
+      }).join("");
+      $("team-table-body").innerHTML = ownerRow + rows;
+    }
+
+    window.handleAddStaff = async (e) => {
+      e.preventDefault();
+      const email = $("new-staff-email").value.trim().toLowerCase();
+      const role = $("new-staff-role").value;
+      if (email === OWNER_EMAIL || admins.some(a => a.email === email)) {
+        alert("This email already has access.");
+        return;
+      }
+      if (role === "Super Admin" && session.role !== "Owner") {
+        alert("Only the owner can add Super Admins.");
+        return;
+      }
+      try {
+        await setDoc(doc(db, "admins", email), { role, addedBy: session.email, addedAt: serverTimestamp() });
+        $("new-staff-email").value = "";
+      } catch (err) {
+        alert("Could not add staff: " + friendlyError(err));
+      }
+    };
+
+    window.revokeStaff = async (email) => {
+      if (!confirm(`Revoke console access for ${email}?`)) return;
+      try {
+        await deleteDoc(doc(db, "admins", email));
+      } catch (err) {
+        alert("Could not revoke: " + friendlyError(err));
+      }
+    };
+
+    // ---- App News (Firestore "news" collection, read by the Android app) ----
+
+    function listenToNews() {
+      const q = query(collection(db, "news"), orderBy("publishedAt", "desc"));
+      unsubscribers.push(onSnapshot(q, (snap) => {
+        newsItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderNews();
+      }, (e) => {
+        $("news-table-body").innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
+      }));
+    }
+
+    function renderNews() {
+      const tbody = $("news-table-body");
+      if (!newsItems.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No news yet. Write the first item above.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = newsItems.map(n => `
+        <tr class="hover:bg-slate-50 transition align-top">
+          <td class="p-3.5 text-slate-500 whitespace-nowrap">${formatDate(n.publishedAt)}</td>
+          <td class="p-3.5 font-medium text-slate-800 max-w-md">${n.isUrgent ? '<span class="text-rose-600 font-bold">URGENT · </span>' : ''}${escapeHtml(n.title)}
+            <div class="text-slate-400 font-normal mt-0.5">${escapeHtml(n.summary)}</div></td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100">${escapeHtml(n.category)}</span></td>
+          <td class="p-3.5">${n.published
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Published</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-600">Draft</span>'}</td>
+          <td class="p-3.5 text-slate-500">${escapeHtml(n.updatedBy)}<br/><span class="text-[10px]">${formatDate(n.updatedAt)}</span></td>
+          <td class="p-3.5 text-right whitespace-nowrap space-x-2">
+            <button data-id="${escapeHtml(n.id)}" onclick="editNews(this.dataset.id)" class="text-emerald-700 hover:underline font-medium">Edit</button>
+            <button data-id="${escapeHtml(n.id)}" onclick="togglePublish(this.dataset.id)" class="text-slate-700 hover:underline font-medium">${n.published ? "Unpublish" : "Publish"}</button>
+            <button data-id="${escapeHtml(n.id)}" onclick="deleteNews(this.dataset.id)" class="text-rose-600 hover:underline font-medium">Delete</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function newsPayload(existing, published) {
+      const payload = {
+        title: $("news-title").value.trim(),
+        summary: $("news-summary").value.trim(),
+        body: $("news-body").value.trim(),
+        url: $("news-url").value.trim(),
+        category: $("news-category").value.trim() || "Announcement",
+        isUrgent: $("news-urgent").checked,
+        published,
+        // An item gets a new date when it is first published, so it shows as new in the app
+        publishedAt: existing && !(published && !existing.published) ? existing.publishedAt : serverTimestamp(),
+        updatedBy: session.email,
+        updatedAt: serverTimestamp()
+      };
+      if (existing) {
+        payload.createdBy = existing.createdBy;
+        payload.createdAt = existing.createdAt;
+      } else {
+        payload.createdBy = session.email;
+        payload.createdAt = serverTimestamp();
+      }
+      return payload;
+    }
+
+    window.saveNews = async (e) => {
+      e.preventDefault();
+      const status = $("news-status");
+      const existing = editingNewsId ? newsItems.find(n => n.id === editingNewsId) : null;
+      const payload = newsPayload(existing, $("news-published").checked);
+      if (payload.url && !payload.url.startsWith("https://")) {
+        status.innerText = "The source link must start with https://";
+        return;
+      }
+      $("news-save-btn").disabled = true;
+      status.innerText = "Saving…";
+      try {
+        if (existing) await setDoc(doc(db, "news", existing.id), payload);
+        else await addDoc(collection(db, "news"), payload);
+        status.innerText = payload.published ? "Saved and published." : "Saved as draft.";
+        resetNewsForm(false);
+      } catch (err) {
+        status.innerText = "Could not save: " + friendlyError(err);
+      } finally {
+        $("news-save-btn").disabled = false;
+      }
+    };
+
+    window.resetNewsForm = (clearStatus = true) => {
+      editingNewsId = null;
+      $("news-form").reset();
+      $("news-category").value = "Announcement";
+      $("news-published").checked = true;
+      $("news-form-title").innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-600"></i> New news item';
+      $("news-cancel-btn").classList.add("hidden");
+      if (clearStatus) $("news-status").innerText = "";
+    };
+
+    window.editNews = (id) => {
+      const n = newsItems.find(x => x.id === id);
+      if (!n) return;
+      editingNewsId = id;
+      $("news-title").value = n.title || "";
+      $("news-summary").value = n.summary || "";
+      $("news-body").value = n.body || "";
+      $("news-url").value = n.url || "";
+      $("news-category").value = n.category || "Announcement";
+      $("news-urgent").checked = !!n.isUrgent;
+      $("news-published").checked = !!n.published;
+      $("news-form-title").innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-600"></i> Editing news item';
+      $("news-cancel-btn").classList.remove("hidden");
+      $("news-status").innerText = "";
+      $("news-form").scrollIntoView({ behavior: "smooth" });
+    };
+
+    window.togglePublish = async (id) => {
+      const n = newsItems.find(x => x.id === id);
+      if (!n) return;
+      const nowPublished = !n.published;
+      try {
+        await updateDoc(doc(db, "news", id), {
+          published: nowPublished,
+          // First publication of a draft moves it to the top in the app
+          ...(nowPublished ? { publishedAt: serverTimestamp() } : {}),
+          updatedBy: session.email,
+          updatedAt: serverTimestamp()
+        });
+      } catch (err) {
+        alert("Could not update: " + friendlyError(err));
+      }
+    };
+
+    window.deleteNews = async (id) => {
+      const n = newsItems.find(x => x.id === id);
+      if (!n || !confirm(`Delete "${n.title}"? It disappears from the app at its next refresh.`)) return;
+      try {
+        await deleteDoc(doc(db, "news", id));
+      } catch (err) {
+        alert("Could not delete: " + friendlyError(err));
+      }
+    };
   </script>
 </body>
 </html>
