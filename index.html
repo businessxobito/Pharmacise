@@ -5,6 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pharmacise Management Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Colour style chosen in the sidebar (same three styles as the app), applied before first paint
+    try { document.documentElement.dataset.palette = localStorage.getItem("pharmacise.palette") || "sand"; }
+    catch (e) { document.documentElement.dataset.palette = "sand"; }
+
+    // Tailwind's slate (neutrals), emerald (accent) and white (cards) follow the chosen style
+    const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+    const scale = (prefix) => Object.fromEntries(shades.map(s => [s, `rgb(var(--${prefix}-${s}) / <alpha-value>)`]));
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: scale("n"),
+            emerald: scale("a"),
+            white: "rgb(var(--card) / <alpha-value>)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Colour styles: Sand & Teal (default), Sage & Paper, Mist. Secondary text (500) is
+       at least 4.75:1 on the page and cards; faint text (400) at least 3.3:1. */
+    html[data-palette="sand"] {
+      --n-50: 251 247 238;
+      --n-100: 245 239 226;
+      --n-200: 232 223 205;
+      --n-300: 216 205 182;
+      --n-400: 142 133 116;
+      --n-500: 111 103 90;
+      --n-600: 98 92 82;
+      --n-700: 75 70 62;
+      --n-800: 51 48 42;
+      --n-900: 38 35 32;
+      --n-950: 28 26 23;
+      --a-50: 232 244 240;
+      --a-100: 210 235 227;
+      --a-200: 169 214 201;
+      --a-300: 127 192 175;
+      --a-400: 95 168 151;
+      --a-500: 60 138 122;
+      --a-600: 42 116 102;
+      --a-700: 33 94 83;
+      --a-800: 26 74 65;
+      --a-900: 20 58 51;
+      --a-950: 13 40 35;
+      --card: 253 250 243;
+    }
+    html[data-palette="sage"] {
+      --n-50: 250 249 245;
+      --n-100: 244 243 238;
+      --n-200: 227 228 222;
+      --n-300: 207 210 203;
+      --n-400: 132 141 137;
+      --n-500: 100 110 106;
+      --n-600: 86 97 94;
+      --n-700: 65 74 71;
+      --n-800: 38 48 46;
+      --n-900: 27 35 33;
+      --n-950: 19 25 24;
+      --a-50: 233 243 240;
+      --a-100: 211 232 227;
+      --a-200: 175 211 202;
+      --a-300: 139 190 179;
+      --a-400: 106 168 156;
+      --a-500: 76 141 130;
+      --a-600: 56 111 104;
+      --a-700: 46 92 86;
+      --a-800: 38 77 72;
+      --a-900: 29 60 56;
+      --a-950: 19 40 38;
+      --card: 252 251 248;
+    }
+    html[data-palette="mist"] {
+      --n-50: 247 249 251;
+      --n-100: 242 245 248;
+      --n-200: 222 229 236;
+      --n-300: 201 210 220;
+      --n-400: 129 140 154;
+      --n-500: 95 107 122;
+      --n-600: 86 97 115;
+      --n-700: 64 74 89;
+      --n-800: 38 48 64;
+      --n-900: 27 35 48;
+      --n-950: 19 25 34;
+      --a-50: 234 242 249;
+      --a-100: 214 230 242;
+      --a-200: 176 205 227;
+      --a-300: 141 181 209;
+      --a-400: 108 154 187;
+      --a-500: 80 130 164;
+      --a-600: 63 110 140;
+      --a-700: 50 88 114;
+      --a-800: 40 70 91;
+      --a-900: 31 54 71;
+      --a-950: 21 36 51;
+      --card: 250 251 253;
+    }
+  </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -93,6 +192,25 @@
             <i class="fa-brands fa-google-drive w-4 text-amber-500"></i> Drive & Sheets
           </button>
         </nav>
+      </div>
+
+      <!-- Colour style (same three as the app; remembered in this browser) -->
+      <div class="px-4 pb-3">
+        <span class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Colour style</span>
+        <div class="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Colour style">
+          <button type="button" id="palette-sand" onclick="setPalette('sand')" role="radio" class="palette-btn rounded-lg border px-1.5 py-2 text-[10px] text-slate-300">
+            <span class="flex justify-center -space-x-1 mb-1"><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#F5EFE2"></i><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#FBF7EE"></i><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#2A7466"></i></span>
+            Sand &amp; Teal
+          </button>
+          <button type="button" id="palette-sage" onclick="setPalette('sage')" role="radio" class="palette-btn rounded-lg border px-1.5 py-2 text-[10px] text-slate-300">
+            <span class="flex justify-center -space-x-1 mb-1"><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#F4F3EE"></i><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#FAF9F5"></i><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#386F68"></i></span>
+            Sage &amp; Paper
+          </button>
+          <button type="button" id="palette-mist" onclick="setPalette('mist')" role="radio" class="palette-btn rounded-lg border px-1.5 py-2 text-[10px] text-slate-300">
+            <span class="flex justify-center -space-x-1 mb-1"><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#F2F5F8"></i><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#F7F9FB"></i><i class="w-3.5 h-3.5 rounded-full border border-slate-700" style="background:#3F6E8C"></i></span>
+            Mist
+          </button>
+        </div>
       </div>
 
       <!-- Logged User Card -->
@@ -1041,6 +1159,28 @@
         status.className = "text-xs block text-emerald-600 font-medium";
       }, 1000);
     }
+
+    // ---- Colour style ----
+
+    function markPalette(name) {
+      ["sand", "sage", "mist"].forEach(p => {
+        const btn = document.getElementById(`palette-${p}`);
+        if (!btn) return;
+        const on = p === name;
+        btn.setAttribute("aria-checked", String(on));
+        btn.classList.toggle("border-emerald-400", on);
+        btn.classList.toggle("bg-slate-800", on);
+        btn.classList.toggle("border-slate-700", !on);
+      });
+    }
+
+    function setPalette(name) {
+      document.documentElement.dataset.palette = name;
+      try { localStorage.setItem("pharmacise.palette", name); } catch (e) { /* private browsing: not remembered */ }
+      markPalette(name);
+    }
+
+    markPalette(document.documentElement.dataset.palette);
   </script>
 
   <!--
