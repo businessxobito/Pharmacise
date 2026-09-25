@@ -148,22 +148,9 @@
           </div>
         </div>
 
-        <!-- Global App Switcher -->
-        <div class="p-4 border-b border-slate-800 bg-slate-950/40">
-          <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-mobile-screen text-emerald-400"></i> Active App Scope
-          </label>
-          <select id="global-app-select" onchange="handleAppSwitch()" class="w-full px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-            <!-- Populated via JS -->
-          </select>
-        </div>
-
         <nav class="p-4 space-y-1.5 text-sm">
           <button onclick="switchTab('overview')" id="tab-overview" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-600 text-white font-medium">
             <i class="fa-solid fa-chart-line w-4"></i> System Overview
-          </button>
-          <button onclick="switchTab('revenue')" id="tab-revenue" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
-            <i class="fa-solid fa-wallet w-4 text-emerald-400"></i> Revenue Tracking
           </button>
           <button onclick="switchTab('verifications')" id="tab-verifications" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-user-check w-4"></i> Verifications
@@ -175,9 +162,6 @@
           <button onclick="switchTab('subscriptions')" id="tab-subscriptions" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-crown w-4 text-amber-400"></i> Pro Members
           </button>
-          <button onclick="switchTab('apps')" id="tab-apps" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
-            <i class="fa-solid fa-shapes w-4 text-indigo-400"></i> Registered Apps
-          </button>
           <button onclick="switchTab('news')" id="tab-news" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-newspaper w-4 text-sky-400"></i> App News
           </button>
@@ -187,9 +171,6 @@
           </button>
           <button onclick="switchTab('team-access')" id="tab-team-access" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-user-shield w-4 text-blue-400"></i> Team & Staff
-          </button>
-          <button onclick="switchTab('integrations')" id="tab-integrations" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
-            <i class="fa-brands fa-google-drive w-4 text-amber-500"></i> Drive & Sheets
           </button>
         </nav>
       </div>
@@ -230,90 +211,42 @@
 
       <!-- SECTION 1: OVERVIEW -->
       <section id="section-overview" class="space-y-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">Dashboard Metrics</h2>
-            <p id="overview-subtitle" class="text-xs text-slate-500">Displaying data for Pharmacise</p>
-          </div>
-          <span class="text-xs bg-emerald-50 text-emerald-700 font-semibold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live System Gateway
-          </span>
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Overview</h2>
+          <p class="text-xs text-slate-500">Live from Firebase. Click a figure to open its tab. "—" means your role doesn't include that area.</p>
         </div>
 
-        <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg">
-          <i class="fa-solid fa-flask mr-1"></i>
-          Revenue, Pro Members, Registered Apps and Drive &amp; Sheets show <b>sample data</b> and are not saved yet.
-          <b>Verifications</b>, <b>App News</b> and <b>Team &amp; Staff</b> are live and saved to Firebase.
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Total Revenue (MRR)</span>
-            <p id="stat-mrr" class="text-2xl font-bold text-emerald-600 mt-1">$0.00</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Active Pro Members</span>
-            <p id="stat-pro" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Pending Reviews</span>
-            <p id="stat-pending" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Registered Apps</span>
-            <p id="stat-apps" class="text-2xl font-bold text-slate-800 mt-1">0</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION 2: REVENUE TRACKING -->
-      <section id="section-revenue" class="hidden space-y-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">Subscription Revenue Tracking</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Real-time log of paid Pro subscriptions, trial conversions, and billing cycles.</p>
-          </div>
-          <button onclick="exportRevenueExcel()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
-            <i class="fa-solid fa-file-invoice-dollar"></i> Export Statement (.xlsx)
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <button type="button" onclick="openTabIfAllowed('users')" class="text-left bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">App users</span>
+            <p id="ov-users" class="text-3xl font-bold text-slate-900 mt-1 tabular-nums">—</p>
+            <p id="ov-users-split" class="text-xs text-slate-500 mt-1"></p>
           </button>
-        </div>
-
-        <!-- Metric Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Monthly Recurring Revenue</span>
-            <p id="rev-mrr" class="text-2xl font-bold text-slate-900 mt-1">$0.00</p>
-            <span class="text-[11px] text-emerald-600 font-medium">Billed automatically via App Store / Play</span>
-          </div>
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Annual Run Rate (ARR)</span>
-            <p id="rev-arr" class="text-2xl font-bold text-slate-900 mt-1">$0.00</p>
-            <span class="text-[11px] text-slate-400">Projected annualized subscriptions</span>
-          </div>
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <span class="text-xs text-slate-500 font-semibold uppercase">Complimentary Discretionary</span>
-            <p id="rev-comp" class="text-2xl font-bold text-indigo-600 mt-1">0 Users</p>
-            <span class="text-[11px] text-slate-400">Admin granted ($0 billable)</span>
-          </div>
-        </div>
-
-        <!-- Revenue Table -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
-                <tr>
-                  <th class="p-3.5">Subscriber</th>
-                  <th class="p-3.5">Plan Cycle</th>
-                  <th class="p-3.5">Amount</th>
-                  <th class="p-3.5">Platform</th>
-                  <th class="p-3.5">Next Renewal</th>
-                  <th class="p-3.5">Status</th>
-                </tr>
-              </thead>
-              <tbody id="revenue-table-body" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
+          <button type="button" onclick="openTabIfAllowed('verifications')" class="text-left bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Awaiting verification</span>
+            <p id="stat-pending" class="text-3xl font-bold text-amber-700 mt-1 tabular-nums">—</p>
+            <p class="text-xs text-slate-500 mt-1">License and student requests to review</p>
+          </button>
+          <button type="button" onclick="openTabIfAllowed('consultations')" class="text-left bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Questions waiting</span>
+            <p id="ov-waiting" class="text-3xl font-bold text-slate-900 mt-1 tabular-nums">—</p>
+            <p id="ov-waiting-note" class="text-xs text-slate-500 mt-1"></p>
+          </button>
+          <button type="button" onclick="openTabIfAllowed('consultations')" class="text-left bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Average first reply</span>
+            <p id="ov-reply" class="text-3xl font-bold text-slate-900 mt-1 tabular-nums">—</p>
+            <p id="ov-reply-note" class="text-xs text-slate-500 mt-1">Questions asked in the last 30 days</p>
+          </button>
+          <button type="button" onclick="openTabIfAllowed('subscriptions')" class="text-left bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Complimentary PRO</span>
+            <p id="ov-pro" class="text-3xl font-bold text-slate-900 mt-1 tabular-nums">—</p>
+            <p class="text-xs text-slate-500 mt-1">Paid subscriptions appear once Google Play billing is live</p>
+          </button>
+          <button type="button" onclick="openTabIfAllowed('news')" class="text-left bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-400 transition">
+            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wide">News published</span>
+            <p id="ov-news" class="text-3xl font-bold text-slate-900 mt-1 tabular-nums">—</p>
+            <p class="text-xs text-slate-500 mt-1">In the last 30 days</p>
+          </button>
         </div>
       </section>
 
@@ -392,8 +325,8 @@
       <!-- SECTION 4: PRO SUBSCRIPTIONS & PERKS -->
       <section id="section-subscriptions" class="hidden space-y-4">
         <div>
-          <h2 class="text-xl font-bold text-slate-900">Pro Subscriptions & Privileges</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Activate Pro entitlements or toggle feature perks for specific apps.</p>
+          <h2 class="text-xl font-bold text-slate-900">Pro Members</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Accounts with complimentary PRO given by Pharmacise. Give PRO to someone from Manage Users. Paid Google Play subscribers will be listed here once purchases are checked by a server.</p>
         </div>
 
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -401,71 +334,16 @@
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
                 <tr>
-                  <th class="p-3.5">App</th>
                   <th class="p-3.5">User</th>
-                  <th class="p-3.5">Tier</th>
-                  <th class="p-3.5">Assigned Perks</th>
-                  <th class="p-3.5">Status</th>
-                  <th class="p-3.5 text-right">Controls</th>
+                  <th class="p-3.5">Type</th>
+                  <th class="p-3.5">Given by</th>
+                  <th class="p-3.5">Since</th>
+                  <th class="p-3.5 text-right"></th>
                 </tr>
               </thead>
-              <tbody id="subscription-table-body" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION 5: APPS DIRECTORY -->
-      <section id="section-apps" class="hidden space-y-6">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900">Application Management</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Register new Android apps to isolate credentials and subscriptions.</p>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-plus text-emerald-600"></i> Register Mobile App
-          </h3>
-          <form onsubmit="handleAddApp(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">App Display Name</label>
-              <input 
-                type="text" 
-                id="new-app-name" 
-                required 
-                placeholder="e.g. Pharmacise" 
-                class="w-full px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Package Name / ID</label>
-              <input 
-                type="text" 
-                id="new-app-package" 
-                required 
-                placeholder="e.g. com.example.pharmacise" 
-                class="w-full px-3 py-2 border rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              />
-            </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-lg transition">
-              Register App
-            </button>
-          </form>
-        </div>
-
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
-                <tr>
-                  <th class="p-3.5">App Name</th>
-                  <th class="p-3.5">Package ID</th>
-                  <th class="p-3.5">Registered Users</th>
-                  <th class="p-3.5">Pending Verifications</th>
-                  <th class="p-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="apps-table-body" class="divide-y divide-slate-100"></tbody>
+              <tbody id="subscription-table-body" class="divide-y divide-slate-100">
+                <tr><td colspan="5" class="p-4 text-center text-slate-400">Loading…</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -573,8 +451,15 @@
 
           <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col min-h-[50vh]">
             <div id="consult-header" class="p-4 border-b border-slate-100 text-sm text-slate-400">Select a consultation.</div>
+            <div id="consult-claim" class="hidden px-4 py-2 border-b border-slate-100 bg-slate-50 text-xs flex flex-wrap items-center gap-2"></div>
             <div id="consult-messages" class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[55vh] text-sm"></div>
             <form id="consult-reply-form" onsubmit="sendReply(event)" class="hidden p-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center gap-2">
+                <label for="consult-saved-select" class="text-xs text-slate-500">Saved reply</label>
+                <select id="consult-saved-select" onchange="insertSavedReply(this)" class="flex-1 min-w-0 px-2 py-1.5 border rounded-lg text-xs bg-white">
+                  <option value="">Insert a saved reply…</option>
+                </select>
+              </div>
               <textarea id="consult-reply" rows="3" maxlength="2000" placeholder="Write a reply…" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
               <div class="flex items-center gap-2">
                 <button type="submit" id="consult-send-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg">Send reply</button>
@@ -583,6 +468,25 @@
               </div>
             </form>
           </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm">Saved replies</h3>
+            <p class="text-xs text-slate-500">Shared by everyone who answers consultations, here and in the app. Edit the inserted text before sending when it needs to fit the question.</p>
+          </div>
+          <form onsubmit="saveSavedReply(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-start">
+            <input id="sr-title" maxlength="60" required placeholder="Title, e.g. Missed dose" class="sm:col-span-1 px-3 py-2 border rounded-lg text-sm" />
+            <textarea id="sr-text" maxlength="2000" required rows="2" placeholder="Reply text" class="sm:col-span-3 px-3 py-2 border rounded-lg text-sm"></textarea>
+            <div class="sm:col-span-4 flex items-center gap-2">
+              <button type="submit" id="sr-save-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg">Add saved reply</button>
+              <button type="button" onclick="resetSavedReplyForm()" class="text-xs text-slate-600 hover:bg-slate-100 px-3 py-2 rounded-lg">Clear</button>
+              <span id="sr-status" class="text-xs text-slate-500"></span>
+            </div>
+          </form>
+          <ul id="sr-list" class="divide-y divide-slate-100 text-xs">
+            <li class="py-3 text-slate-400">Loading…</li>
+          </ul>
         </div>
       </section>
 
@@ -636,37 +540,6 @@
               </thead>
               <tbody id="team-table-body" class="divide-y divide-slate-100"></tbody>
             </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION 7: GOOGLE DRIVE & SHEETS -->
-      <section id="section-integrations" class="hidden space-y-4">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900">Google Drive & Sheet Integration</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Link an external Google Sheet for automated spreadsheet synchronization.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <h3 class="font-semibold text-slate-900 text-sm flex items-center gap-2">
-              <i class="fa-solid fa-link text-emerald-600"></i> Webhook / Sheet CSV URL
-            </h3>
-            <input 
-              type="url" 
-              id="sheet-url-input" 
-              placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"
-              class="w-full px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            />
-            <button onclick="syncDriveSheet()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">
-              Sync Data
-            </button>
-            <span id="sync-status" class="text-xs block text-slate-500"></span>
-          </div>
-
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs text-slate-600">
-            <h4 class="font-bold text-slate-900 text-sm mb-1">Pharmacise Ingestion Protocol</h4>
-            <p>Each row in your Google Sheet can include an <code>app_id</code> column (e.g., <code>app-pharmacise</code>). The console will automatically map users to Pharmacise.</p>
           </div>
         </div>
       </section>
@@ -793,138 +666,12 @@
     </div>
   </div>
 
-  <!-- MODAL: PERKS OVERRIDE -->
-  <div id="perks-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-bold text-slate-900 text-base" id="modal-user-name">Adjust Privileges</h3>
-      
-      <div class="space-y-3 text-xs">
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="perk-offline" class="rounded text-emerald-600" />
-          <span>Full Offline Database Access</span>
-        </label>
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="perk-interactions" class="rounded text-emerald-600" />
-          <span>Multi-Drug Interaction Checker</span>
-        </label>
-        <label class="flex items-center gap-2">
-          <input type="checkbox" id="perk-priority" class="rounded text-emerald-600" />
-          <span>Priority Clinical Monograph Updates</span>
-        </label>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closePerksModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-        <button onclick="savePerks()" class="px-4 py-1.5 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold">Apply Changes</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Sign-in, roles, the team list and App News live in the Firebase module script
-    // at the end of this page.
-
-    // Application Registry (sample data)
-    let apps = [
-      { id: "app-pharmacise", name: "Pharmacise", package: "com.example.pharmacise" },
-      { id: "app-dosecalc", name: "PediatricDoseGuide", package: "com.example.dosecalc" }
-    ];
-
-    let currentAppScope = "app-pharmacise";
-
-    // Users Registry with Revenue & Pricing Records (sample data)
-    let users = [
-      {
-        id: "USR-101",
-        appId: "app-pharmacise",
-        name: "Dr. Laila Mansour",
-        email: "laila.mansour@hospital.ae",
-        role: "Pharmacist",
-        licenseNumber: "MOH-49812",
-        fileUrl: "license_scan.pdf",
-        verificationStatus: "Pending",
-        isPro: true,
-        planType: "Monthly Pro",
-        planAmount: 14.99,
-        platform: "Google Play",
-        renewalDate: "2026-10-15",
-        perks: ["Offline Database Access"]
-      },
-      {
-        id: "USR-102",
-        appId: "app-pharmacise",
-        name: "Tariq Al-Hashemi",
-        email: "tariq.chem@pharma.org",
-        role: "Clinical Specialist",
-        licenseNumber: "DHA-89211",
-        fileUrl: "board_certificate.png",
-        verificationStatus: "Verified",
-        isPro: true,
-        planType: "Annual Pro",
-        planAmount: 129.99,
-        platform: "Apple App Store",
-        renewalDate: "2027-02-10",
-        perks: ["Offline Database Access", "Multi-Drug Interaction Checker"]
-      },
-      {
-        id: "USR-103",
-        appId: "app-pharmacise",
-        name: "Sara Jensen",
-        email: "sara.j@student.edu",
-        role: "Pharmacy Student",
-        licenseNumber: "STU-00914",
-        fileUrl: "university_id.jpg",
-        verificationStatus: "Pending",
-        isPro: false,
-        planType: "None",
-        planAmount: 0.00,
-        platform: "-",
-        renewalDate: "-",
-        perks: []
-      },
-      {
-        id: "USR-104",
-        appId: "app-pharmacise",
-        name: "Dr. Zaid Qasim",
-        email: "zqasim@alainhealth.ae",
-        role: "Hospital Director",
-        licenseNumber: "DOH-99412",
-        fileUrl: "director_id.pdf",
-        verificationStatus: "Verified",
-        isPro: true,
-        planType: "Admin Discretionary",
-        planAmount: 0.00,
-        platform: "Manual Override",
-        renewalDate: "2028-01-01",
-        perks: ["Offline Database Access", "Multi-Drug Interaction Checker", "Priority Clinical Monograph Updates"]
-      }
-    ];
-
-    let activeModalUserId = null;
-
-    function initAppSwitcher() {
-      const select = document.getElementById("global-app-select");
-      select.innerHTML = `
-        <option value="ALL">All Applications (${apps.length})</option>
-        ${apps.map(a => `<option value="${a.id}">${a.name}</option>`).join("")}
-      `;
-      select.value = currentAppScope;
-    }
-
-    function handleAppSwitch() {
-      currentAppScope = document.getElementById("global-app-select").value;
-      const subtitle = document.getElementById("overview-subtitle");
-      if (currentAppScope === "ALL") {
-        subtitle.innerText = "Displaying aggregated data across all apps";
-      } else {
-        const app = apps.find(a => a.id === currentAppScope);
-        subtitle.innerText = `Filtered scope: ${app.name} (${app.package})`;
-      }
-      renderAll();
-    }
+    // Everything that reads or writes data lives in the Firebase module script at the end of
+    // this page. This script only switches tabs and applies the colour style.
 
     function switchTab(tab) {
-      ["overview", "users", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"].forEach(t => {
+      ["overview", "users", "verifications", "subscriptions", "news", "consultations", "team-access"].forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         if (sec) sec.classList.toggle("hidden", t !== tab);
         
@@ -940,225 +687,6 @@
       });
     }
 
-    function getScopedUsers() {
-      return currentAppScope === "ALL" ? users : users.filter(u => u.appId === currentAppScope);
-    }
-
-    function getAppName(appId) {
-      const a = apps.find(x => x.id === appId);
-      return a ? a.name : "Unknown";
-    }
-
-    function renderAll() {
-      renderStats();
-      renderRevenue();
-      renderSubscriptions();
-      renderApps();
-      // The team list, verifications and the pending count are kept up to date by the Firebase module
-    }
-
-    function renderStats() {
-      const scoped = getScopedUsers();
-      const proUsers = scoped.filter(u => u.isPro);
-      
-      // Calculate normalized monthly revenue
-      let mrr = 0;
-      proUsers.forEach(u => {
-        if (u.planType === "Monthly Pro") mrr += u.planAmount;
-        if (u.planType === "Annual Pro") mrr += (u.planAmount / 12);
-      });
-
-      document.getElementById("stat-pro").innerText = proUsers.length;
-      document.getElementById("stat-mrr").innerText = `$${mrr.toFixed(2)}`;
-      document.getElementById("stat-apps").innerText = apps.length;
-    }
-
-    function renderRevenue() {
-      const scoped = getScopedUsers().filter(u => u.isPro);
-      const tbody = document.getElementById("revenue-table-body");
-
-      let mrr = 0;
-      let compCount = 0;
-
-      scoped.forEach(u => {
-        if (u.planType === "Monthly Pro") mrr += u.planAmount;
-        else if (u.planType === "Annual Pro") mrr += (u.planAmount / 12);
-        else if (u.planType === "Admin Discretionary" || u.planAmount === 0) compCount++;
-      });
-
-      document.getElementById("rev-mrr").innerText = `$${mrr.toFixed(2)}`;
-      document.getElementById("rev-arr").innerText = `$${(mrr * 12).toFixed(2)}`;
-      document.getElementById("rev-comp").innerText = `${compCount} Users`;
-
-      if (!scoped.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No active subscriber revenue records in this scope.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = scoped.map(u => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="p-3.5 font-medium text-slate-800">${u.name}<br/><span class="text-slate-400 font-normal">${u.email}</span></td>
-          <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100">${u.planType}</span></td>
-          <td class="p-3.5 font-bold text-slate-900">$${u.planAmount.toFixed(2)}</td>
-          <td class="p-3.5 text-slate-600">${u.platform}</td>
-          <td class="p-3.5 text-slate-500 font-mono">${u.renewalDate}</td>
-          <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Active Paid</span></td>
-        </tr>
-      `).join("");
-    }
-
-
-    function renderSubscriptions() {
-      const tbody = document.getElementById("subscription-table-body");
-      const scoped = getScopedUsers();
-
-      tbody.innerHTML = scoped.map(user => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="p-3.5"><span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">${getAppName(user.appId)}</span></td>
-          <td class="p-3.5 font-medium text-slate-800">${user.name}</td>
-          <td class="p-3.5">
-            <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${user.isPro ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-600'}">
-              ${user.isPro ? '★ ' + user.planType : 'Free Tier'}
-            </span>
-          </td>
-          <td class="p-3.5 text-slate-600">${user.perks.length ? user.perks.join(", ") : '<span class="text-slate-400 italic">None</span>'}</td>
-          <td class="p-3.5"><span class="text-[11px] ${user.isPro ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${user.isPro ? 'Active' : 'Inactive'}</span></td>
-          <td class="p-3.5 text-right space-x-2">
-            <button onclick="togglePro('${user.id}')" class="text-xs font-semibold px-2 py-1 rounded ${user.isPro ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}">
-              ${user.isPro ? 'Revoke Pro' : 'Activate Pro'}
-            </button>
-            <button onclick="openPerksModal('${user.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">Edit Perks</button>
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    function renderApps() {
-      const tbody = document.getElementById("apps-table-body");
-      tbody.innerHTML = apps.map(app => {
-        const appUsers = users.filter(u => u.appId === app.id);
-        const pendingCount = appUsers.filter(u => u.verificationStatus === "Pending").length;
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="p-3.5 font-bold text-slate-900">${app.name}</td>
-            <td class="p-3.5 font-mono text-slate-600">${app.package}</td>
-            <td class="p-3.5 font-medium text-slate-800">${appUsers.length}</td>
-            <td class="p-3.5">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${pendingCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
-                ${pendingCount} Pending
-              </span>
-            </td>
-            <td class="p-3.5 text-right">
-              <button onclick="selectAppScope('${app.id}')" class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs">Switch Scope</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    function handleAddApp(e) {
-      e.preventDefault();
-      const name = document.getElementById("new-app-name").value.trim();
-      const pkg = document.getElementById("new-app-package").value.trim().toLowerCase();
-
-      if (apps.some(a => a.package === pkg)) {
-        alert("An app with this package name already exists.");
-        return;
-      }
-
-      const newId = "app-" + name.toLowerCase().replace(/[^a-z0-9]/g, "");
-      apps.push({ id: newId, name, package: pkg });
-
-      document.getElementById("new-app-name").value = "";
-      document.getElementById("new-app-package").value = "";
-
-      initAppSwitcher();
-      renderAll();
-    }
-
-    function selectAppScope(appId) {
-      currentAppScope = appId;
-      document.getElementById("global-app-select").value = appId;
-      handleAppSwitch();
-      switchTab("verifications");
-    }
-
-
-    function togglePro(userId) {
-      const u = users.find(x => x.id === userId);
-      if (u) {
-        u.isPro = !u.isPro;
-        if (u.isPro) {
-          u.planType = "Admin Discretionary";
-          u.planAmount = 0.00;
-          u.platform = "Manual Override";
-          u.renewalDate = "2027-12-31";
-          if (!u.perks.length) u.perks = ["Offline Database Access"];
-        } else {
-          u.planType = "None";
-          u.planAmount = 0.00;
-          u.platform = "-";
-          u.renewalDate = "-";
-        }
-        renderAll();
-      }
-    }
-
-    function openPerksModal(userId) {
-      activeModalUserId = userId;
-      const u = users.find(x => x.id === userId);
-      document.getElementById("modal-user-name").innerText = `Privileges: ${u.name} (${getAppName(u.appId)})`;
-      document.getElementById("perk-offline").checked = u.perks.includes("Offline Database Access");
-      document.getElementById("perk-interactions").checked = u.perks.includes("Multi-Drug Interaction Checker");
-      document.getElementById("perk-priority").checked = u.perks.includes("Priority Clinical Monograph Updates");
-      document.getElementById("perks-modal").classList.remove("hidden");
-    }
-
-    function closePerksModal() {
-      document.getElementById("perks-modal").classList.add("hidden");
-    }
-
-    function savePerks() {
-      const u = users.find(x => x.id === activeModalUserId);
-      if (u) {
-        const newPerks = [];
-        if (document.getElementById("perk-offline").checked) newPerks.push("Offline Database Access");
-        if (document.getElementById("perk-interactions").checked) newPerks.push("Multi-Drug Interaction Checker");
-        if (document.getElementById("perk-priority").checked) newPerks.push("Priority Clinical Monograph Updates");
-        u.perks = newPerks;
-        renderAll();
-      }
-      closePerksModal();
-    }
-
-
-    function exportRevenueExcel() {
-      const scoped = getScopedUsers().filter(u => u.isPro);
-      const exportData = scoped.map(u => ({
-        "App Name": getAppName(u.appId),
-        "User Name": u.name,
-        "Email Address": u.email,
-        "Plan Type": u.planType,
-        "Billing Rate ($)": u.planAmount,
-        "Payment Channel": u.platform,
-        "Renewal Date": u.renewalDate,
-        "Active Perks": u.perks.join("; ")
-      }));
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Revenue_Statement");
-      XLSX.writeFile(wb, `${getAppName(currentAppScope)}_Revenue_Statement.xlsx`);
-    }
-
-    function syncDriveSheet() {
-      const status = document.getElementById("sync-status");
-      status.innerText = "Connecting to Google Drive Sheet endpoint...";
-      status.className = "text-xs block text-amber-600 font-medium";
-      setTimeout(() => {
-        status.innerText = "✓ Multi-app rows synced successfully with Google Drive.";
-        status.className = "text-xs block text-emerald-600 font-medium";
-      }, 1000);
-    }
 
     // ---- Colour style ----
 
@@ -1211,14 +739,14 @@
     // Must match owner() in firestore.rules
     const OWNER_EMAIL = "kattanobito@gmail.com";
 
-    const ALL_TABS = ["overview", "users", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"];
+    const ALL_TABS = ["overview", "users", "verifications", "subscriptions", "news", "consultations", "team-access"];
     const TABS_BY_ROLE = {
       "Owner": ALL_TABS,
       "Super Admin": ALL_TABS,
       "News Editor": ["news"],
       "Consultant": ["consultations"],
       "Compliance Reviewer": ["overview", "verifications"],
-      "Viewer": ["overview", "revenue", "verifications", "subscriptions", "apps", "integrations"]
+      "Viewer": ["overview"]
     };
 
     const app = initializeApp(firebaseConfig);
@@ -1310,16 +838,115 @@
 
       const allowed = TABS_BY_ROLE[role];
       ALL_TABS.forEach(t => $(`tab-${t}`)?.classList.toggle("hidden", !allowed.includes(t)));
-      initAppSwitcher();
-      renderAll();
       switchTab(allowed[0]);
 
+      loaded = {};
+      renderOverview();
       if (allowed.includes("news")) listenToNews();
-      if (allowed.includes("team-access")) listenToTeam();
+      // Consultants read the staff list to hand consultations over
+      if (allowed.includes("team-access") || allowed.includes("consultations")) listenToTeam();
       if (allowed.includes("verifications")) listenToVerifications();
-      if (allowed.includes("consultations")) listenToConsultations();
-      if (allowed.includes("users")) listenToUsers();
+      if (allowed.includes("consultations")) { listenToConsultations(); listenToSavedReplies(); }
+      // Reviewers may read users too (the rules allow it), for the Overview count
+      if (allowed.includes("users") || role === "Compliance Reviewer") listenToUsers();
     });
+
+    window.openTabIfAllowed = (tab) => {
+      if (session && TABS_BY_ROLE[session.role].includes(tab)) switchTab(tab);
+    };
+
+    // ---- Overview (live figures from whatever this role can read) ----
+
+    let loaded = {};                 // which collections have arrived: users, verifications, consultations, news
+    const DAY = 24 * 60 * 60 * 1000;
+
+    function setFigure(id, value) {
+      $(id).innerText = value;
+    }
+
+    function formatDuration(ms) {
+      const minutes = Math.round(ms / 60000);
+      if (minutes < 60) return `${minutes} min`;
+      const hours = minutes / 60;
+      if (hours < 48) return `${hours.toFixed(hours < 10 ? 1 : 0)} h`;
+      return `${(hours / 24).toFixed(1)} days`;
+    }
+
+    function renderOverview() {
+      if (loaded.users) {
+        const pros = appUsers.filter(u => u.audience === "professional").length;
+        setFigure("ov-users", appUsers.length);
+        $("ov-users-split").innerText = `${appUsers.length - pros} public · ${pros} professional`;
+        setFigure("ov-pro", appUsers.filter(u => u.proGranted).length);
+      } else {
+        setFigure("ov-users", "—");
+        $("ov-users-split").innerText = "";
+        setFigure("ov-pro", "—");
+      }
+
+      setFigure("stat-pending", loaded.verifications ? verifications.filter(v => v.status === "pending").length : "—");
+
+      if (loaded.consultations) {
+        const waiting = consultations.filter(c => c.status === "open");
+        setFigure("ov-waiting", waiting.length);
+        const unclaimed = waiting.filter(c => !c.consultantEmail).length;
+        const oldest = waiting.reduce((min, c) => Math.min(min, c.updatedAt?.toMillis?.() ?? Infinity), Infinity);
+        $("ov-waiting-note").innerText = waiting.length
+          ? `${unclaimed} unclaimed · oldest waiting ${formatDuration(Date.now() - oldest)}`
+          : "Nothing waiting";
+
+        const since = Date.now() - 30 * DAY;
+        const replyTimes = consultations
+          .filter(c => c.createdAt?.toMillis && c.firstReplyAt?.toMillis && c.createdAt.toMillis() >= since)
+          .map(c => c.firstReplyAt.toMillis() - c.createdAt.toMillis());
+        setFigure("ov-reply", replyTimes.length ? formatDuration(replyTimes.reduce((a, b) => a + b, 0) / replyTimes.length) : "—");
+        $("ov-reply-note").innerText = replyTimes.length
+          ? `From ${replyTimes.length} question${replyTimes.length === 1 ? "" : "s"} asked in the last 30 days`
+          : "No answered questions in the last 30 days";
+      } else {
+        setFigure("ov-waiting", "—");
+        $("ov-waiting-note").innerText = "";
+        setFigure("ov-reply", "—");
+      }
+
+      if (loaded.news) {
+        const since = Date.now() - 30 * DAY;
+        setFigure("ov-news", newsItems.filter(n => n.published && (n.publishedAt?.toMillis?.() ?? 0) >= since).length);
+      } else {
+        setFigure("ov-news", "—");
+      }
+    }
+
+    // ---- Pro Members (complimentary PRO given from Manage Users) ----
+
+    function renderProMembers() {
+      const tbody = $("subscription-table-body");
+      const members = appUsers.filter(u => u.proGranted);
+      if (!members.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No complimentary PRO yet. Give it to someone from Manage Users.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = members.map(u => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-medium text-slate-800">${escapeHtml(u.displayName || "(no name)")}<br/><span class="text-slate-500 font-normal">${escapeHtml(u.email)}</span></td>
+          <td class="p-3.5 text-slate-600">${u.audience === "professional" ? "Professional" : "Public"}</td>
+          <td class="p-3.5 text-slate-600">${escapeHtml(u.proGrantedBy || "—")}</td>
+          <td class="p-3.5 text-slate-500 whitespace-nowrap">${formatDate(u.proGrantedAt)}</td>
+          <td class="p-3.5 text-right whitespace-nowrap">${isSuperAdmin()
+            ? `<button data-uid="${escapeHtml(u.uid)}" onclick="removeComplimentaryPro(this.dataset.uid)" class="text-rose-600 hover:underline font-semibold">Remove PRO</button>`
+            : ""}</td>
+        </tr>`).join("");
+    }
+
+    window.removeComplimentaryPro = async (uid) => {
+      const u = appUsers.find(x => x.uid === uid);
+      if (!u || !confirm(`Remove complimentary PRO from ${u.displayName || u.email}? Their PRO features stop straight away unless they pay for PRO.`)) return;
+      try {
+        await updateDoc(doc(db, "users", uid), { proGranted: false, updatedBy: session.email, updatedAt: serverTimestamp() });
+      } catch (err) {
+        alert("Could not remove PRO: " + friendlyError(err));
+      }
+    };
 
     const isSuperAdmin = () => session && (session.role === "Owner" || session.role === "Super Admin");
 
@@ -1332,6 +959,7 @@
         admins = snap.docs.map(d => ({ email: d.id, ...d.data() })).sort((a, b) => a.email.localeCompare(b.email));
         renderTeamList();
         renderUsers();
+        renderConsultHeader();
       }, (e) => {
         $("team-table-body").innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
       }));
@@ -1409,6 +1037,8 @@
         const pending = verifications.filter(v => v.status === "pending").length;
         $("stat-pending").innerText = pending;
         $("pending-counter-badge").innerText = pending;
+        loaded.verifications = true;
+        renderOverview();
         renderVerifications();
         renderUsers();
       }, (e) => {
@@ -1535,6 +1165,9 @@
       const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
       unsubscribers.push(onSnapshot(q, (snap) => {
         appUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        loaded.users = true;
+        renderOverview();
+        renderProMembers();
         renderUsers();
         if (managedUid) fillUserModal();
       }, (e) => {
@@ -1741,6 +1374,8 @@
       unsubscribers.push(onSnapshot(q, (snap) => {
         consultations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         $("consult-counter-badge").innerText = consultations.filter(c => c.status === "open").length;
+        loaded.consultations = true;
+        renderOverview();
         renderConsultList();
         renderConsultHeader();
       }, (e) => {
@@ -1782,16 +1417,76 @@
       return consultations.find(c => c.id === selectedConsultId);
     }
 
+    // Same rule as mayAnswer() in firestore.rules: unclaimed, mine, or I manage users
+    const mayAnswer = (c) => !c.consultantEmail || c.consultantEmail === session.email || isSuperAdmin();
+
+    // Everyone who may answer consultations: the owner, Super Admins and Consultants
+    function colleagues() {
+      const list = [{ email: OWNER_EMAIL, role: "Founder" }]
+        .concat(admins.filter(a => a.role === "Super Admin" || a.role === "Consultant"));
+      return list.filter(a => a.email !== session.email);
+    }
+
     function renderConsultHeader() {
       const c = selectedConsultation();
       if (!c) return;
       $("consult-header").innerHTML = `
         <div class="font-semibold text-slate-900">${escapeHtml(c.subject)}</div>
         <div class="text-xs text-slate-500">${escapeHtml(c.patientName)} · ${escapeHtml(c.patientEmail)} · ${CONSULT_STATUS_LABELS[c.status] || escapeHtml(c.status)}</div>`;
+
+      const mine = c.consultantEmail === session.email;
+      const canReassign = !c.consultantEmail || mine || isSuperAdmin();
+      const who = !c.consultantEmail
+        ? '<span class="text-amber-700 font-semibold">Unclaimed</span>'
+        : mine ? '<span class="text-emerald-700 font-semibold">Claimed by you</span>'
+        : `Claimed by <b>${escapeHtml(c.consultantName || c.consultantEmail)}</b>`;
+      const handOver = canReassign && colleagues().length
+        ? `<label for="consult-handover" class="sr-only">Hand over to</label>
+           <select id="consult-handover" onchange="handOverConsultation(this)" class="px-2 py-1 border rounded-lg bg-white">
+             <option value="">Hand over to…</option>
+             ${colleagues().filter(a => a.email !== c.consultantEmail).map(a =>
+               `<option value="${escapeHtml(a.email)}">${escapeHtml(a.email)} (${escapeHtml(a.role)})</option>`).join("")}
+           </select>`
+        : "";
+      $("consult-claim").innerHTML = `
+        <span class="mr-auto text-slate-600">${who}</span>
+        ${!c.consultantEmail ? '<button type="button" onclick="claimConsultation()" class="font-semibold text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded">Claim</button>' : ""}
+        ${c.consultantEmail && canReassign ? '<button type="button" onclick="releaseConsultation()" class="text-slate-600 hover:bg-slate-100 px-2 py-1 rounded">Release</button>' : ""}
+        ${handOver}`;
+      $("consult-claim").classList.remove("hidden");
+
+      const blocked = c.status === "closed" || !mayAnswer(c);
       $("consult-close-btn").innerText = c.status === "closed" ? "Reopen consultation" : "Close consultation";
-      $("consult-reply").disabled = c.status === "closed";
-      $("consult-send-btn").disabled = c.status === "closed";
+      $("consult-reply").disabled = blocked;
+      $("consult-send-btn").disabled = blocked;
+      $("consult-reply").placeholder = !mayAnswer(c)
+        ? `${c.consultantName || c.consultantEmail} is answering this one.`
+        : c.consultantEmail ? "Write a reply…" : "Write a reply… (replying claims this consultation)";
     }
+
+    // consultantEmail and consultantName together; deleting both releases the thread
+    async function assignConsultation(email, name) {
+      const c = selectedConsultation();
+      if (!c) return;
+      const assignment = email
+        ? { consultantEmail: email, consultantName: name }
+        : { consultantEmail: deleteField(), consultantName: deleteField() };
+      try {
+        await updateDoc(doc(db, "consultations", c.id), { ...assignment, updatedAt: serverTimestamp() });
+        $("consult-status").innerText = email === session.email ? "Claimed." : email ? `Handed over to ${email}.` : "Released.";
+      } catch (err) {
+        $("consult-status").innerText = "Could not update: " + friendlyError(err);
+      }
+    }
+
+    window.claimConsultation = () => assignConsultation(session.email, consultantName());
+    window.releaseConsultation = () => assignConsultation(null);
+    window.handOverConsultation = (select) => {
+      const email = select.value;
+      select.value = "";
+      if (!email || !confirm(`Hand this consultation over to ${email}? They will answer it from now on.`)) return;
+      assignConsultation(email, email.split("@")[0]);
+    };
 
     window.selectConsultation = (id) => {
       selectedConsultId = id;
@@ -1830,9 +1525,26 @@
       const c = selectedConsultation();
       const text = $("consult-reply").value.trim();
       if (!c || !text) return;
+      if (!mayAnswer(c)) {
+        $("consult-status").innerText = `${c.consultantName || c.consultantEmail} is answering this consultation.`;
+        return;
+      }
       $("consult-send-btn").disabled = true;
       $("consult-status").innerText = "Sending…";
       try {
+        const thread = {
+          status: "answered",
+          lastMessage: text.replace(/\s+/g, " ").slice(0, 200),
+          lastSender: "consultant",
+          updatedAt: serverTimestamp()
+        };
+        // Replying to an unclaimed thread claims it; a Super Admin replying keeps the colleague's claim
+        if (!c.consultantEmail) {
+          thread.consultantEmail = session.email;
+          thread.consultantName = consultantName();
+        }
+        if (!c.firstReplyAt) thread.firstReplyAt = serverTimestamp();
+
         // The message and the thread update are written together
         const batch = writeBatch(db);
         batch.set(doc(collection(db, "consultations", c.id, "messages")), {
@@ -1842,14 +1554,7 @@
           text: text.slice(0, 2000),
           createdAt: serverTimestamp()
         });
-        batch.update(doc(db, "consultations", c.id), {
-          status: "answered",
-          lastMessage: text.replace(/\s+/g, " ").slice(0, 200),
-          lastSender: "consultant",
-          consultantEmail: session.email,
-          consultantName: consultantName(),
-          updatedAt: serverTimestamp()
-        });
+        batch.update(doc(db, "consultations", c.id), thread);
         await batch.commit();
         $("consult-reply").value = "";
         $("consult-status").innerText = "Sent.";
@@ -1875,12 +1580,101 @@
       }
     };
 
+    // ---- Saved replies (Firestore "savedReplies"; also offered in the app's inbox) ----
+
+    let savedReplies = [];
+    let editingSavedReplyId = null;
+
+    function listenToSavedReplies() {
+      const q = query(collection(db, "savedReplies"), orderBy("title"));
+      unsubscribers.push(onSnapshot(q, (snap) => {
+        savedReplies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderSavedReplies();
+      }, (e) => {
+        $("sr-list").innerHTML = `<li class="py-3 text-rose-600">${escapeHtml(friendlyError(e))}</li>`;
+      }));
+    }
+
+    function renderSavedReplies() {
+      $("consult-saved-select").innerHTML = '<option value="">Insert a saved reply…</option>' +
+        savedReplies.map(r => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.title)}</option>`).join("");
+      $("sr-list").innerHTML = savedReplies.map(r => `
+        <li class="py-3 flex gap-3 items-start">
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-800">${escapeHtml(r.title)}</div>
+            <div class="text-slate-600 whitespace-pre-wrap mt-0.5">${escapeHtml(r.text)}</div>
+            <div class="text-[10px] text-slate-500 mt-1">Last edited by ${escapeHtml(r.updatedBy)} · ${formatDate(r.updatedAt)}</div>
+          </div>
+          <button data-id="${escapeHtml(r.id)}" onclick="editSavedReply(this.dataset.id)" class="text-emerald-700 hover:underline font-medium">Edit</button>
+          <button data-id="${escapeHtml(r.id)}" onclick="deleteSavedReply(this.dataset.id)" class="text-rose-600 hover:underline font-medium">Delete</button>
+        </li>`).join("") || '<li class="py-3 text-slate-500">No saved replies yet. Add answers you give often, such as what to do after a missed dose.</li>';
+    }
+
+    window.insertSavedReply = (select) => {
+      const r = savedReplies.find(x => x.id === select.value);
+      select.value = "";
+      if (!r) return;
+      const box = $("consult-reply");
+      if (box.disabled) return;
+      box.value = box.value.trim() ? `${box.value.trim()}\n\n${r.text}` : r.text;
+      box.focus();
+    };
+
+    window.saveSavedReply = async (e) => {
+      e.preventDefault();
+      const title = $("sr-title").value.trim().slice(0, 60);
+      const text = $("sr-text").value.trim().slice(0, 2000);
+      if (!title || !text) return;
+      const data = { title, text, updatedBy: session.email, updatedAt: serverTimestamp() };
+      $("sr-status").innerText = "Saving…";
+      try {
+        if (editingSavedReplyId) await setDoc(doc(db, "savedReplies", editingSavedReplyId), data);
+        else await addDoc(collection(db, "savedReplies"), data);
+        resetSavedReplyForm();
+        $("sr-status").innerText = "Saved.";
+      } catch (err) {
+        $("sr-status").innerText = "Could not save: " + friendlyError(err);
+      }
+    };
+
+    window.editSavedReply = (id) => {
+      const r = savedReplies.find(x => x.id === id);
+      if (!r) return;
+      editingSavedReplyId = id;
+      $("sr-title").value = r.title;
+      $("sr-text").value = r.text;
+      $("sr-save-btn").innerText = "Save changes";
+      $("sr-status").innerText = `Editing "${r.title}"`;
+      $("sr-title").focus();
+    };
+
+    window.resetSavedReplyForm = () => {
+      editingSavedReplyId = null;
+      $("sr-title").value = "";
+      $("sr-text").value = "";
+      $("sr-save-btn").innerText = "Add saved reply";
+      $("sr-status").innerText = "";
+    };
+
+    window.deleteSavedReply = async (id) => {
+      const r = savedReplies.find(x => x.id === id);
+      if (!r || !confirm(`Delete the saved reply "${r.title}"?`)) return;
+      try {
+        await deleteDoc(doc(db, "savedReplies", id));
+        if (editingSavedReplyId === id) resetSavedReplyForm();
+      } catch (err) {
+        alert("Could not delete: " + friendlyError(err));
+      }
+    };
+
     // ---- App News (Firestore "news" collection, read by the Android app) ----
 
     function listenToNews() {
       const q = query(collection(db, "news"), orderBy("publishedAt", "desc"));
       unsubscribers.push(onSnapshot(q, (snap) => {
         newsItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        loaded.news = true;
+        renderOverview();
         renderNews();
       }, (e) => {
         $("news-table-body").innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
