@@ -70,6 +70,9 @@
             <i class="fa-solid fa-user-check w-4"></i> Verifications
             <span id="pending-counter-badge" class="ml-auto bg-amber-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.5 rounded-full">0</span>
           </button>
+          <button onclick="switchTab('users')" id="tab-users" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-users w-4 text-emerald-400"></i> Manage Users
+          </button>
           <button onclick="switchTab('subscriptions')" id="tab-subscriptions" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-crown w-4 text-amber-400"></i> Pro Members
           </button>
@@ -230,6 +233,38 @@
               </thead>
               <tbody id="verification-table-body" class="divide-y divide-slate-100">
                 <tr><td colspan="6" class="p-4 text-center text-slate-400">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: MANAGE USERS (Firestore users, verifications and admins, joined) -->
+      <section id="section-users" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Manage Users</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Everyone who has signed in to the Pharmacise app. Change names and account type, give complimentary PRO, assign staff roles (for example Consultant), and amend or revoke professional verification. Every change is recorded with your email.</p>
+          </div>
+          <input id="users-search" oninput="renderUsers()" placeholder="Search name, email, license…" class="w-full sm:w-72 px-3 py-2 border rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                <tr>
+                  <th class="p-3.5">User</th>
+                  <th class="p-3.5">Type</th>
+                  <th class="p-3.5">Verification</th>
+                  <th class="p-3.5">Staff role</th>
+                  <th class="p-3.5">PRO</th>
+                  <th class="p-3.5">Joined</th>
+                  <th class="p-3.5 text-right"></th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body" class="divide-y divide-slate-100">
+                <tr><td colspan="7" class="p-4 text-center text-slate-400">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -521,6 +556,125 @@
     </main>
   </div>
 
+  <!-- MODAL: MANAGE ONE USER -->
+  <div id="user-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl my-8">
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="font-bold text-slate-900 text-base" id="um-title">User</h3>
+          <p class="text-xs text-slate-500" id="um-subtitle"></p>
+        </div>
+        <button onclick="closeUserModal()" class="p-2 text-slate-400 hover:text-slate-700" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Profile -->
+      <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+        <h4 class="font-semibold text-sm text-slate-900">Profile</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <label class="block">Display name
+            <input id="um-name" maxlength="100" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+          <label class="block">Account type
+            <select id="um-audience" class="mt-1 w-full px-3 py-2 border rounded-lg bg-white">
+              <option value="public">General public</option>
+              <option value="professional">Healthcare professional</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-2 sm:col-span-2">
+            <input type="checkbox" id="um-pro" class="rounded text-emerald-600" />
+            <span>Complimentary PRO (free, given by Pharmacise; independent of Google Play purchases)</span>
+          </label>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="saveUserProfile()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg">Save profile</button>
+          <span id="um-profile-status" class="text-xs text-slate-500"></span>
+        </div>
+      </div>
+
+      <!-- Staff role -->
+      <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+        <h4 class="font-semibold text-sm text-slate-900">Staff role</h4>
+        <p class="text-[11px] text-slate-500">Gives this Google account access to the console. Consultants also get the consultation inbox in the app.</p>
+        <div class="flex flex-col sm:flex-row gap-2 text-xs">
+          <select id="um-role" class="px-3 py-2 border rounded-lg bg-white sm:w-72">
+            <option value="">No staff role</option>
+            <option value="Consultant">Consultant (answers consultations)</option>
+            <option value="News Editor">News Editor (App News)</option>
+            <option value="Compliance Reviewer">Compliance Reviewer (Verifications)</option>
+            <option value="Viewer">Viewer (read-only)</option>
+            <option value="Super Admin">Super Admin (owner only)</option>
+          </select>
+          <button onclick="saveUserRole()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg">Save role</button>
+          <span id="um-role-status" class="text-xs text-slate-500 self-center"></span>
+        </div>
+      </div>
+
+      <!-- Verification -->
+      <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+        <h4 class="font-semibold text-sm text-slate-900">Professional verification</h4>
+        <p class="text-[11px] text-slate-500" id="um-ver-note"></p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <label class="block">Type
+            <select id="um-type" onchange="updateVerificationFields()" class="mt-1 w-full px-3 py-2 border rounded-lg bg-white">
+              <option value="license">Licensed professional</option>
+              <option value="student">Student</option>
+            </select>
+          </label>
+          <label class="block">Status
+            <select id="um-status" class="mt-1 w-full px-3 py-2 border rounded-lg bg-white">
+              <option value="approved">Approved</option>
+              <option value="pending">Pending</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </label>
+          <label class="block">Credential label (e.g. PharmD, MD)
+            <input id="um-label" maxlength="20" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+          <label class="block">Full name (as on license / ID)
+            <input id="um-fullname" maxlength="100" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+          <label class="block sm:col-span-2">Profession
+            <input id="um-profession" maxlength="60" list="um-professions" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+            <datalist id="um-professions">
+              <option value="Pharmacist"></option><option value="Physician"></option><option value="Dentist"></option>
+              <option value="Nurse"></option><option value="Other healthcare professional"></option>
+              <option value="Pharmacy student"></option><option value="Medical student"></option>
+              <option value="Dental student"></option><option value="Nursing student"></option>
+            </datalist>
+          </label>
+          <label class="block um-license">Licensing authority
+            <input id="um-authority" maxlength="60" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+          <label class="block um-license">License number
+            <input id="um-license" maxlength="40" class="mt-1 w-full px-3 py-2 border rounded-lg font-mono" />
+          </label>
+          <label class="block um-license">License expiry (YYYY-MM-DD)
+            <input id="um-expiry" maxlength="10" placeholder="2027-12-31" class="mt-1 w-full px-3 py-2 border rounded-lg font-mono" />
+          </label>
+          <label class="block um-student">University
+            <input id="um-university" maxlength="120" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+          <label class="block um-student">Student ID
+            <input id="um-studentid" maxlength="40" class="mt-1 w-full px-3 py-2 border rounded-lg font-mono" />
+          </label>
+          <label class="block um-student">University email
+            <input id="um-uniemail" maxlength="120" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+          <label class="block sm:col-span-3">Reason (shown to the user when rejected)
+            <input id="um-reason" maxlength="300" class="mt-1 w-full px-3 py-2 border rounded-lg" />
+          </label>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="saveUserVerification()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg">Save verification</button>
+          <button onclick="revokeUserVerification()" id="um-revoke-btn" class="text-xs text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-lg">Remove verification</button>
+          <span id="um-ver-status" class="text-xs text-slate-500"></span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-slate-400">Blocking or deleting a Google sign-in needs server functions (Firebase Blaze plan). Removing roles, verification and complimentary PRO takes effect immediately.</p>
+    </div>
+  </div>
+
   <!-- MODAL: PERKS OVERRIDE -->
   <div id="perks-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
@@ -652,7 +806,7 @@
     }
 
     function switchTab(tab) {
-      ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"].forEach(t => {
+      ["overview", "users", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"].forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         if (sec) sec.classList.toggle("hidden", t !== tab);
         
@@ -917,7 +1071,7 @@
     // Must match owner() in firestore.rules
     const OWNER_EMAIL = "kattanobito@gmail.com";
 
-    const ALL_TABS = ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"];
+    const ALL_TABS = ["overview", "users", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"];
     const TABS_BY_ROLE = {
       "Owner": ALL_TABS,
       "Super Admin": ALL_TABS,
@@ -1024,6 +1178,7 @@
       if (allowed.includes("team-access")) listenToTeam();
       if (allowed.includes("verifications")) listenToVerifications();
       if (allowed.includes("consultations")) listenToConsultations();
+      if (allowed.includes("users")) listenToUsers();
     });
 
     const isSuperAdmin = () => session && (session.role === "Owner" || session.role === "Super Admin");
@@ -1036,6 +1191,7 @@
       unsubscribers.push(onSnapshot(collection(db, "admins"), (snap) => {
         admins = snap.docs.map(d => ({ email: d.id, ...d.data() })).sort((a, b) => a.email.localeCompare(b.email));
         renderTeamList();
+        renderUsers();
       }, (e) => {
         $("team-table-body").innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
       }));
@@ -1114,6 +1270,7 @@
         $("stat-pending").innerText = pending;
         $("pending-counter-badge").innerText = pending;
         renderVerifications();
+        renderUsers();
       }, (e) => {
         $("verification-table-body").innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
       }));
@@ -1227,6 +1384,207 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Verifications");
       XLSX.writeFile(wb, "Pharmacise_Verifications.xlsx");
+    };
+
+    // ---- Manage Users (users joined with verifications and admins) ----
+
+    let appUsers = [];
+    let managedUid = null;
+
+    function listenToUsers() {
+      const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+      unsubscribers.push(onSnapshot(q, (snap) => {
+        appUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        renderUsers();
+        if (managedUid) fillUserModal();
+      }, (e) => {
+        $("users-table-body").innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
+      }));
+    }
+
+    const verificationOf = (uid) => verifications.find(v => v.uid === uid);
+    const roleOf = (email) => {
+      const e = (email || "").toLowerCase();
+      if (e === OWNER_EMAIL) return "Owner";
+      return admins.find(a => a.email === e)?.role || "";
+    };
+
+    function verificationBadge(v) {
+      if (!v) return '<span class="text-slate-400">—</span>';
+      const colors = { approved: "bg-emerald-100 text-emerald-700", pending: "bg-amber-100 text-amber-800", rejected: "bg-rose-100 text-rose-700" };
+      const label = v.status === "approved" ? `✓ ${escapeHtml(v.credentialLabel)}` : escapeHtml(v.status);
+      const expiry = v.licenseExpiry ? `<div class="text-[10px] text-slate-400 mt-0.5">${escapeHtml(v.licenseNumber)} · exp. ${escapeHtml(v.licenseExpiry)}</div>` : "";
+      return `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors[v.status] || ""}">${label}</span><div class="text-slate-500 mt-0.5">${escapeHtml(v.profession)}</div>${expiry}`;
+    }
+
+    function renderUsers() {
+      const tbody = $("users-table-body");
+      if (!tbody || !session) return;
+      const term = ($("users-search").value || "").trim().toLowerCase();
+      const rows = appUsers.filter(u => {
+        if (!term) return true;
+        const v = verificationOf(u.uid) || {};
+        return [u.displayName, u.email, v.fullName, v.licenseNumber, v.credentialLabel, roleOf(u.email)]
+          .some(x => (x || "").toLowerCase().includes(term));
+      });
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">${appUsers.length ? "No matching users." : "No app users yet."}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = rows.map(u => {
+        const role = roleOf(u.email);
+        return `
+          <tr class="hover:bg-slate-50 transition align-top">
+            <td class="p-3.5 font-medium text-slate-800">${escapeHtml(u.displayName || "(no name)")}<br/><span class="text-slate-400 font-normal">${escapeHtml(u.email)}</span></td>
+            <td class="p-3.5 text-slate-600">${u.audience === "professional" ? "Professional" : "Public"}</td>
+            <td class="p-3.5">${verificationBadge(verificationOf(u.uid))}</td>
+            <td class="p-3.5">${role ? `<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700">${escapeHtml(role)}</span>` : '<span class="text-slate-400">—</span>'}</td>
+            <td class="p-3.5">${u.proGranted ? '<span class="text-amber-700 font-semibold">Complimentary</span>' : '<span class="text-slate-400">—</span>'}</td>
+            <td class="p-3.5 text-slate-500 whitespace-nowrap">${formatDate(u.createdAt)}</td>
+            <td class="p-3.5 text-right"><button data-uid="${escapeHtml(u.uid)}" onclick="openUserModal(this.dataset.uid)" class="text-emerald-700 hover:underline font-semibold">Manage</button></td>
+          </tr>`;
+      }).join("");
+    }
+    window.renderUsers = renderUsers;
+
+    window.updateVerificationFields = () => {
+      const student = $("um-type").value === "student";
+      document.querySelectorAll(".um-license").forEach(el => el.classList.toggle("hidden", student));
+      document.querySelectorAll(".um-student").forEach(el => el.classList.toggle("hidden", !student));
+    };
+
+    function fillUserModal() {
+      const u = appUsers.find(x => x.uid === managedUid);
+      if (!u) return;
+      const v = verificationOf(u.uid);
+      $("um-title").innerText = u.displayName || u.email;
+      $("um-subtitle").innerText = `${u.email} · joined ${formatDate(u.createdAt)}${u.updatedBy ? " · last edited by " + u.updatedBy : ""}`;
+      $("um-name").value = u.displayName || "";
+      $("um-audience").value = u.audience || "public";
+      $("um-pro").checked = !!u.proGranted;
+
+      const role = roleOf(u.email);
+      $("um-role").value = role === "Owner" ? "" : role;
+      $("um-role").disabled = role === "Owner";
+      // Only the owner may grant or remove Super Admin (enforced by the rules too)
+      $("um-role").querySelector('option[value="Super Admin"]').disabled = session.role !== "Owner";
+
+      $("um-ver-note").innerText = v
+        ? `Current status: ${v.status}${v.reviewedBy ? ", last reviewed by " + v.reviewedBy : ""}. Saving replaces the record and signs it with your email.`
+        : "This user has no verification. Fill the form to verify them directly.";
+      $("um-type").value = v?.type || "license";
+      $("um-status").value = v?.status || "approved";
+      $("um-label").value = v?.credentialLabel || "";
+      $("um-fullname").value = v?.fullName || u.displayName || "";
+      $("um-profession").value = v?.profession || "";
+      $("um-authority").value = v?.authority || "";
+      $("um-license").value = v?.licenseNumber || "";
+      $("um-expiry").value = v?.licenseExpiry || "";
+      $("um-university").value = v?.university || "";
+      $("um-studentid").value = v?.studentId || "";
+      $("um-uniemail").value = v?.universityEmail || "";
+      $("um-reason").value = v?.rejectionReason || "";
+      $("um-revoke-btn").classList.toggle("hidden", !v);
+      updateVerificationFields();
+    }
+
+    window.openUserModal = (uid) => {
+      managedUid = uid;
+      ["um-profile-status", "um-role-status", "um-ver-status"].forEach(id => $(id).innerText = "");
+      fillUserModal();
+      $("user-modal").classList.remove("hidden");
+    };
+
+    window.closeUserModal = () => {
+      managedUid = null;
+      $("user-modal").classList.add("hidden");
+    };
+
+    window.saveUserProfile = async () => {
+      const u = appUsers.find(x => x.uid === managedUid);
+      if (!u) return;
+      const granting = $("um-pro").checked;
+      const update = {
+        displayName: $("um-name").value.trim().slice(0, 100),
+        audience: $("um-audience").value,
+        proGranted: granting,
+        updatedBy: session.email,
+        updatedAt: serverTimestamp()
+      };
+      if (granting && !u.proGranted) {
+        update.proGrantedBy = session.email;
+        update.proGrantedAt = serverTimestamp();
+      }
+      $("um-profile-status").innerText = "Saving…";
+      try {
+        await updateDoc(doc(db, "users", u.uid), update);
+        $("um-profile-status").innerText = "Saved.";
+      } catch (err) {
+        $("um-profile-status").innerText = "Could not save: " + friendlyError(err);
+      }
+    };
+
+    window.saveUserRole = async () => {
+      const u = appUsers.find(x => x.uid === managedUid);
+      if (!u) return;
+      const email = (u.email || "").toLowerCase();
+      const role = $("um-role").value;
+      $("um-role-status").innerText = "Saving…";
+      try {
+        if (!role) await deleteDoc(doc(db, "admins", email));
+        else await setDoc(doc(db, "admins", email), { role, addedBy: session.email, addedAt: serverTimestamp() });
+        $("um-role-status").innerText = role ? `Now ${role}.` : "Staff role removed.";
+      } catch (err) {
+        $("um-role-status").innerText = "Could not save: " + friendlyError(err);
+      }
+    };
+
+    window.saveUserVerification = async () => {
+      const u = appUsers.find(x => x.uid === managedUid);
+      if (!u) return;
+      const existing = verificationOf(u.uid);
+      const type = $("um-type").value;
+      const status = $("um-status").value;
+      const label = $("um-label").value.trim().slice(0, 20);
+      const fullName = $("um-fullname").value.trim();
+      const profession = $("um-profession").value.trim();
+      const expiry = $("um-expiry").value.trim();
+      const problems = [];
+      if (fullName.length < 3) problems.push("full name");
+      if (!profession) problems.push("profession");
+      if (status === "approved" && !label) problems.push("credential label");
+      if (type === "license" && expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) problems.push("expiry as YYYY-MM-DD");
+      if (problems.length) { $("um-ver-status").innerText = "Please fill: " + problems.join(", "); return; }
+
+      // The whole record, signed by this reviewer (see validReviewedRecord in the rules)
+      const record = { type, status, fullName: fullName.slice(0, 100), profession: profession.slice(0, 60), email: existing?.email || u.email, reviewedBy: session.email, reviewedAt: serverTimestamp() };
+      if (existing?.submittedAt) record.submittedAt = existing.submittedAt;
+      if (status === "approved") record.credentialLabel = label;
+      if (status === "rejected" && $("um-reason").value.trim()) record.rejectionReason = $("um-reason").value.trim().slice(0, 300);
+      const optional = type === "license"
+        ? { authority: $("um-authority").value.trim(), licenseNumber: $("um-license").value.trim().slice(0, 40), licenseExpiry: expiry }
+        : { university: $("um-university").value.trim(), studentId: $("um-studentid").value.trim(), universityEmail: $("um-uniemail").value.trim().toLowerCase() };
+      Object.entries(optional).forEach(([k, val]) => { if (val) record[k] = val; });
+
+      $("um-ver-status").innerText = "Saving…";
+      try {
+        await setDoc(doc(db, "verifications", u.uid), record);
+        $("um-ver-status").innerText = "Saved. The app updates within seconds.";
+      } catch (err) {
+        $("um-ver-status").innerText = "Could not save: " + friendlyError(err);
+      }
+    };
+
+    window.revokeUserVerification = async () => {
+      const u = appUsers.find(x => x.uid === managedUid);
+      if (!u || !confirm(`Remove ${u.displayName || u.email}'s verification? They go back to the public view immediately.`)) return;
+      $("um-ver-status").innerText = "Removing…";
+      try {
+        await deleteDoc(doc(db, "verifications", u.uid));
+        $("um-ver-status").innerText = "Verification removed.";
+      } catch (err) {
+        $("um-ver-status").innerText = "Could not remove: " + friendlyError(err);
+      }
     };
 
     // ---- Consultations ("Ask a pharmacist"; Firestore "consultations" and their "messages") ----
