@@ -117,8 +117,8 @@
 
         <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg">
           <i class="fa-solid fa-flask mr-1"></i>
-          Revenue, Verifications, Pro Members, Registered Apps and Drive &amp; Sheets show <b>sample data</b> and are not saved yet.
-          <b>App News</b> and <b>Team &amp; Staff</b> are live and saved to Firebase.
+          Revenue, Pro Members, Registered Apps and Drive &amp; Sheets show <b>sample data</b> and are not saved yet.
+          <b>Verifications</b>, <b>App News</b> and <b>Team &amp; Staff</b> are live and saved to Firebase.
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -196,12 +196,19 @@
       <section id="section-verifications" class="hidden space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h2 class="text-xl font-bold text-slate-900">User Licensure & Verification</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Inspect and approve submitted medical IDs across your mobile apps.</p>
+            <h2 class="text-xl font-bold text-slate-900">Professional Verification</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Requests from Pharmacise app users. Check each license number in the issuing authority's public practitioner register, and students with their university, before approving. Approved users see the professional view with their credential label.</p>
           </div>
-          <button onclick="exportToExcel()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm">
+          <button onclick="exportToExcel()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-sm shrink-0">
             <i class="fa-solid fa-file-excel"></i> Export (.xlsx)
           </button>
+        </div>
+
+        <div class="flex gap-2 text-xs">
+          <button onclick="setVerificationFilter('pending')" id="vf-pending" class="px-3 py-1.5 rounded-full border">Pending</button>
+          <button onclick="setVerificationFilter('approved')" id="vf-approved" class="px-3 py-1.5 rounded-full border">Approved</button>
+          <button onclick="setVerificationFilter('rejected')" id="vf-rejected" class="px-3 py-1.5 rounded-full border">Rejected</button>
+          <button onclick="setVerificationFilter('all')" id="vf-all" class="px-3 py-1.5 rounded-full border">All</button>
         </div>
 
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -209,16 +216,17 @@
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
                 <tr>
-                  <th class="p-3.5">App</th>
-                  <th class="p-3.5">User</th>
-                  <th class="p-3.5">Designation</th>
-                  <th class="p-3.5">License ID</th>
-                  <th class="p-3.5">Attachment</th>
+                  <th class="p-3.5">Applicant</th>
+                  <th class="p-3.5">Profession</th>
+                  <th class="p-3.5">Details to check</th>
+                  <th class="p-3.5">Submitted</th>
                   <th class="p-3.5">Status</th>
-                  <th class="p-3.5 text-right">Review Action</th>
+                  <th class="p-3.5 text-right">Decision</th>
                 </tr>
               </thead>
-              <tbody id="verification-table-body" class="divide-y divide-slate-100"></tbody>
+              <tbody id="verification-table-body" class="divide-y divide-slate-100">
+                <tr><td colspan="6" class="p-4 text-center text-slate-400">Loading…</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -631,15 +639,13 @@
     function renderAll() {
       renderStats();
       renderRevenue();
-      renderVerifications();
       renderSubscriptions();
       renderApps();
-      // The team list is kept up to date by the Firebase module
+      // The team list, verifications and the pending count are kept up to date by the Firebase module
     }
 
     function renderStats() {
       const scoped = getScopedUsers();
-      const pending = scoped.filter(u => u.verificationStatus === "Pending").length;
       const proUsers = scoped.filter(u => u.isPro);
       
       // Calculate normalized monthly revenue
@@ -649,8 +655,6 @@
         if (u.planType === "Annual Pro") mrr += (u.planAmount / 12);
       });
 
-      document.getElementById("stat-pending").innerText = pending;
-      document.getElementById("pending-counter-badge").innerText = pending;
       document.getElementById("stat-pro").innerText = proUsers.length;
       document.getElementById("stat-mrr").innerText = `$${mrr.toFixed(2)}`;
       document.getElementById("stat-apps").innerText = apps.length;
@@ -690,39 +694,6 @@
       `).join("");
     }
 
-    function renderVerifications() {
-      const tbody = document.getElementById("verification-table-body");
-      const scoped = getScopedUsers();
-
-      if (!scoped.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No submissions found.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = scoped.map(user => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="p-3.5"><span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">${getAppName(user.appId)}</span></td>
-          <td class="p-3.5 font-medium text-slate-800">${user.name}<br/><span class="text-slate-400 font-normal">${user.email}</span></td>
-          <td class="p-3.5 text-slate-600">${user.role}</td>
-          <td class="p-3.5 font-mono text-slate-700">${user.licenseNumber}</td>
-          <td class="p-3.5">
-            <button onclick="alert('Viewing file: ${user.fileUrl}')" class="text-emerald-600 hover:underline inline-flex items-center gap-1">
-              <i class="fa-solid fa-file-pdf"></i> View File
-            </button>
-          </td>
-          <td class="p-3.5">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-              user.verificationStatus === 'Verified' ? 'bg-emerald-100 text-emerald-700' :
-              user.verificationStatus === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
-            }">${user.verificationStatus}</span>
-          </td>
-          <td class="p-3.5 text-right space-x-1">
-            <button onclick="setVerification('${user.id}', 'Verified')" class="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded" title="Approve"><i class="fa-solid fa-check"></i></button>
-            <button onclick="setVerification('${user.id}', 'Rejected')" class="p-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded" title="Reject"><i class="fa-solid fa-xmark"></i></button>
-          </td>
-        </tr>
-      `).join("");
-    }
 
     function renderSubscriptions() {
       const tbody = document.getElementById("subscription-table-body");
@@ -799,10 +770,6 @@
       switchTab("verifications");
     }
 
-    function setVerification(userId, status) {
-      const u = users.find(x => x.id === userId);
-      if (u) { u.verificationStatus = status; renderAll(); }
-    }
 
     function togglePro(userId) {
       const u = users.find(x => x.id === userId);
@@ -851,25 +818,6 @@
       closePerksModal();
     }
 
-    function exportToExcel() {
-      const scoped = getScopedUsers();
-      const exportData = scoped.map(u => ({
-        "App ID": u.appId,
-        "App Name": getAppName(u.appId),
-        "User ID": u.id,
-        "Name": u.name,
-        "Email": u.email,
-        "Role": u.role,
-        "License Number": u.licenseNumber,
-        "Verification Status": u.verificationStatus,
-        "Pro Subscribed": u.isPro ? "YES" : "NO",
-        "Granted Perks": u.perks.join("; ")
-      }));
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Verification_Data");
-      XLSX.writeFile(wb, `${getAppName(currentAppScope)}_Verification_Data.xlsx`);
-    }
 
     function exportRevenueExcel() {
       const scoped = getScopedUsers().filter(u => u.isPro);
@@ -912,7 +860,7 @@
     } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
     import {
       getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
-      onSnapshot, query, orderBy, serverTimestamp
+      onSnapshot, query, orderBy, serverTimestamp, deleteField
     } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
     // Public web config; access is controlled by the security rules
@@ -1032,6 +980,7 @@
 
       if (allowed.includes("news")) listenToNews();
       if (allowed.includes("team-access")) listenToTeam();
+      if (allowed.includes("verifications")) listenToVerifications();
     });
 
     const isSuperAdmin = () => session && (session.role === "Owner" || session.role === "Super Admin");
@@ -1100,6 +1049,141 @@
       } catch (err) {
         alert("Could not revoke: " + friendlyError(err));
       }
+    };
+
+    // ---- Professional verification (Firestore "verifications" collection, keyed by app user ID) ----
+
+    let verifications = [];
+    let verificationFilter = "pending";
+
+    // Suggested short credential for each profession; the reviewer can change it
+    const SUGGESTED_LABELS = {
+      "Pharmacist": "PharmD", "Physician": "MD", "Dentist": "DDS", "Nurse": "RN",
+      "Pharmacy student": "Pharm Student", "Medical student": "Med Student",
+      "Dental student": "Dental Student", "Nursing student": "Nursing Student"
+    };
+
+    function listenToVerifications() {
+      const q = query(collection(db, "verifications"), orderBy("submittedAt", "desc"));
+      unsubscribers.push(onSnapshot(q, (snap) => {
+        verifications = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        const pending = verifications.filter(v => v.status === "pending").length;
+        $("stat-pending").innerText = pending;
+        $("pending-counter-badge").innerText = pending;
+        renderVerifications();
+      }, (e) => {
+        $("verification-table-body").innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</td></tr>`;
+      }));
+    }
+
+    window.setVerificationFilter = (filter) => {
+      verificationFilter = filter;
+      renderVerifications();
+    };
+
+    function verificationDetails(v) {
+      if (v.type === "student") {
+        return `<b>Student</b> · ${escapeHtml(v.university)}<br/>Student ID: <span class="font-mono">${escapeHtml(v.studentId)}</span><br/>University email: ${escapeHtml(v.universityEmail)}`;
+      }
+      return `<b>License</b> · ${escapeHtml(v.authority)}<br/>No. <span class="font-mono">${escapeHtml(v.licenseNumber)}</span> · expires ${escapeHtml(v.licenseExpiry)}`;
+    }
+
+    function renderVerifications() {
+      ["pending", "approved", "rejected", "all"].forEach(f => {
+        $(`vf-${f}`).className = "px-3 py-1.5 rounded-full border " + (f === verificationFilter ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600");
+      });
+      const rows = verificationFilter === "all" ? verifications : verifications.filter(v => v.status === verificationFilter);
+      const tbody = $("verification-table-body");
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No ${verificationFilter === "all" ? "" : verificationFilter + " "}requests.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = rows.map(v => {
+        const status = v.status === "approved"
+          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Approved · ${escapeHtml(v.credentialLabel)}</span>`
+          : v.status === "rejected"
+            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-700">Rejected</span><div class="text-slate-400 mt-1">${escapeHtml(v.rejectionReason)}</div>`
+            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">Pending</span>`;
+        const reviewed = v.reviewedBy ? `<div class="text-[10px] text-slate-400 mt-1">by ${escapeHtml(v.reviewedBy)}, ${formatDate(v.reviewedAt)}</div>` : "";
+        return `
+          <tr class="hover:bg-slate-50 transition align-top">
+            <td class="p-3.5 font-medium text-slate-800">${escapeHtml(v.fullName)}<br/><span class="text-slate-400 font-normal">${escapeHtml(v.email)}</span></td>
+            <td class="p-3.5 text-slate-600">${escapeHtml(v.profession)}</td>
+            <td class="p-3.5 text-slate-600">${verificationDetails(v)}</td>
+            <td class="p-3.5 text-slate-500 whitespace-nowrap">${formatDate(v.submittedAt)}</td>
+            <td class="p-3.5">${status}${reviewed}</td>
+            <td class="p-3.5 text-right whitespace-nowrap space-x-1">
+              <button data-uid="${escapeHtml(v.uid)}" onclick="approveVerification(this.dataset.uid)" class="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded" title="Approve"><i class="fa-solid fa-check"></i> Approve</button>
+              <button data-uid="${escapeHtml(v.uid)}" onclick="rejectVerification(this.dataset.uid)" class="p-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded" title="Reject"><i class="fa-solid fa-xmark"></i> Reject</button>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    window.approveVerification = async (uid) => {
+      const v = verifications.find(x => x.uid === uid);
+      if (!v) return;
+      const label = prompt(
+        `Approve ${v.fullName} as ${v.profession}?\n\nShort credential shown next to their name in the app (max 20 characters), e.g. PharmD, RPh, MD, DDS, RN, PhD:`,
+        v.credentialLabel || SUGGESTED_LABELS[v.profession] || ""
+      );
+      if (label === null) return;
+      const clean = label.trim().slice(0, 20);
+      if (!clean) { alert("A credential label is required to approve."); return; }
+      try {
+        await updateDoc(doc(db, "verifications", uid), {
+          status: "approved",
+          credentialLabel: clean,
+          rejectionReason: deleteField(),
+          reviewedBy: session.email,
+          reviewedAt: serverTimestamp()
+        });
+      } catch (err) {
+        alert("Could not approve: " + friendlyError(err));
+      }
+    };
+
+    window.rejectVerification = async (uid) => {
+      const v = verifications.find(x => x.uid === uid);
+      if (!v) return;
+      const reason = prompt(`Reject ${v.fullName}?\n\nReason shown to the applicant in the app (for example "License number not found in the SCFHS register"):`, v.rejectionReason || "");
+      if (reason === null) return;
+      if (!reason.trim()) { alert("Please give a reason so the applicant knows what to fix."); return; }
+      try {
+        await updateDoc(doc(db, "verifications", uid), {
+          status: "rejected",
+          rejectionReason: reason.trim().slice(0, 300),
+          credentialLabel: deleteField(),
+          reviewedBy: session.email,
+          reviewedAt: serverTimestamp()
+        });
+      } catch (err) {
+        alert("Could not reject: " + friendlyError(err));
+      }
+    };
+
+    window.exportToExcel = () => {
+      const data = verifications.map(v => ({
+        "Name": v.fullName,
+        "Google account": v.email,
+        "Type": v.type,
+        "Profession": v.profession,
+        "Authority": v.authority || "",
+        "License number": v.licenseNumber || "",
+        "License expiry": v.licenseExpiry || "",
+        "University": v.university || "",
+        "Student ID": v.studentId || "",
+        "University email": v.universityEmail || "",
+        "Status": v.status,
+        "Credential": v.credentialLabel || "",
+        "Rejection reason": v.rejectionReason || "",
+        "Submitted": v.submittedAt?.toDate ? v.submittedAt.toDate().toISOString() : "",
+        "Reviewed by": v.reviewedBy || ""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Verifications");
+      XLSX.writeFile(wb, "Pharmacise_Verifications.xlsx");
     };
 
     // ---- App News (Firestore "news" collection, read by the Android app) ----
