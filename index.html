@@ -79,6 +79,10 @@
           <button onclick="switchTab('news')" id="tab-news" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-newspaper w-4 text-sky-400"></i> App News
           </button>
+          <button onclick="switchTab('consultations')" id="tab-consultations" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
+            <i class="fa-solid fa-comments w-4 text-teal-400"></i> Consultations
+            <span id="consult-counter-badge" class="ml-auto bg-teal-400 text-slate-950 font-bold text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+          </button>
           <button onclick="switchTab('team-access')" id="tab-team-access" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition text-slate-300">
             <i class="fa-solid fa-user-shield w-4 text-blue-400"></i> Team & Staff
           </button>
@@ -393,6 +397,42 @@
       </section>
 
       <!-- SECTION 6: TEAM ACCESS -->
+      <!-- SECTION: CONSULTATIONS ("Ask a pharmacist" in the app) -->
+      <section id="section-consultations" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Consultations</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Questions from PRO users of the Pharmacise app. Replies appear in the app straight away. Messages cannot be edited or deleted once sent. Give general guidance only; for anything urgent, direct the user to emergency care (997).</p>
+        </div>
+
+        <div class="flex gap-2 text-xs">
+          <button onclick="setConsultFilter('open')" id="cf-open" class="px-3 py-1.5 rounded-full border">Waiting for reply</button>
+          <button onclick="setConsultFilter('answered')" id="cf-answered" class="px-3 py-1.5 rounded-full border">Answered</button>
+          <button onclick="setConsultFilter('closed')" id="cf-closed" class="px-3 py-1.5 rounded-full border">Closed</button>
+          <button onclick="setConsultFilter('all')" id="cf-all" class="px-3 py-1.5 rounded-full border">All</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <ul id="consult-list" class="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto text-xs">
+              <li class="p-4 text-center text-slate-400">Loading…</li>
+            </ul>
+          </div>
+
+          <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col min-h-[50vh]">
+            <div id="consult-header" class="p-4 border-b border-slate-100 text-sm text-slate-400">Select a consultation.</div>
+            <div id="consult-messages" class="flex-1 p-4 space-y-3 overflow-y-auto max-h-[55vh] text-sm"></div>
+            <form id="consult-reply-form" onsubmit="sendReply(event)" class="hidden p-3 border-t border-slate-100 space-y-2">
+              <textarea id="consult-reply" rows="3" maxlength="2000" placeholder="Write a reply…" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+              <div class="flex items-center gap-2">
+                <button type="submit" id="consult-send-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg">Send reply</button>
+                <button type="button" id="consult-close-btn" onclick="toggleConsultClosed()" class="text-xs text-slate-600 hover:bg-slate-100 px-3 py-2 rounded-lg">Close consultation</button>
+                <span id="consult-status" class="text-xs text-slate-500"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
       <section id="section-team-access" class="hidden space-y-6">
         <div>
           <h2 class="text-xl font-bold text-slate-900">Staff & Team Whitelist</h2>
@@ -418,6 +458,7 @@
               <label class="block text-xs font-semibold text-slate-700 mb-1">Access Level</label>
               <select id="new-staff-role" class="w-full px-3 py-2 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                 <option value="News Editor">News Editor (App News only)</option>
+                <option value="Consultant">Consultant (answers Consultations only)</option>
                 <option value="Super Admin">Super Admin (All Apps)</option>
                 <option value="Compliance Reviewer">Compliance Reviewer (Verification Only)</option>
                 <option value="Viewer">Read-Only Viewer</option>
@@ -611,7 +652,7 @@
     }
 
     function switchTab(tab) {
-      ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "team-access", "integrations"].forEach(t => {
+      ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"].forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         if (sec) sec.classList.toggle("hidden", t !== tab);
         
@@ -860,7 +901,7 @@
     } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
     import {
       getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
-      onSnapshot, query, orderBy, serverTimestamp, deleteField
+      onSnapshot, query, orderBy, serverTimestamp, deleteField, writeBatch
     } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
     // Public web config; access is controlled by the security rules
@@ -876,11 +917,12 @@
     // Must match owner() in firestore.rules
     const OWNER_EMAIL = "kattanobito@gmail.com";
 
-    const ALL_TABS = ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "team-access", "integrations"];
+    const ALL_TABS = ["overview", "revenue", "verifications", "subscriptions", "apps", "news", "consultations", "team-access", "integrations"];
     const TABS_BY_ROLE = {
       "Owner": ALL_TABS,
       "Super Admin": ALL_TABS,
       "News Editor": ["news"],
+      "Consultant": ["consultations"],
       "Compliance Reviewer": ["overview", "verifications"],
       "Viewer": ["overview", "revenue", "verifications", "subscriptions", "apps", "integrations"]
     };
@@ -981,6 +1023,7 @@
       if (allowed.includes("news")) listenToNews();
       if (allowed.includes("team-access")) listenToTeam();
       if (allowed.includes("verifications")) listenToVerifications();
+      if (allowed.includes("consultations")) listenToConsultations();
     });
 
     const isSuperAdmin = () => session && (session.role === "Owner" || session.role === "Super Admin");
@@ -1184,6 +1227,154 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Verifications");
       XLSX.writeFile(wb, "Pharmacise_Verifications.xlsx");
+    };
+
+    // ---- Consultations ("Ask a pharmacist"; Firestore "consultations" and their "messages") ----
+
+    let consultations = [];
+    let consultFilter = "open";
+    let selectedConsultId = null;
+    let unsubscribeMessages = null;
+
+    const CONSULT_STATUS_LABELS = { open: "Waiting for reply", answered: "Answered", closed: "Closed" };
+
+    function listenToConsultations() {
+      const q = query(collection(db, "consultations"), orderBy("updatedAt", "desc"));
+      unsubscribers.push(onSnapshot(q, (snap) => {
+        consultations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        $("consult-counter-badge").innerText = consultations.filter(c => c.status === "open").length;
+        renderConsultList();
+        renderConsultHeader();
+      }, (e) => {
+        $("consult-list").innerHTML = `<li class="p-4 text-center text-rose-600">${escapeHtml(friendlyError(e))}</li>`;
+      }));
+      unsubscribers.push(() => { if (unsubscribeMessages) unsubscribeMessages(); });
+    }
+
+    window.setConsultFilter = (filter) => {
+      consultFilter = filter;
+      renderConsultList();
+    };
+
+    function renderConsultList() {
+      ["open", "answered", "closed", "all"].forEach(f => {
+        $(`cf-${f}`).className = "px-3 py-1.5 rounded-full border " + (f === consultFilter ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600");
+      });
+      const rows = consultFilter === "all" ? consultations : consultations.filter(c => c.status === consultFilter);
+      if (!rows.length) {
+        $("consult-list").innerHTML = `<li class="p-4 text-center text-slate-400">Nothing here.</li>`;
+        return;
+      }
+      $("consult-list").innerHTML = rows.map(c => `
+        <li data-id="${escapeHtml(c.id)}" onclick="selectConsultation(this.dataset.id)"
+            class="p-3 cursor-pointer hover:bg-slate-50 ${c.id === selectedConsultId ? "bg-emerald-50" : ""}">
+          <div class="flex justify-between gap-2">
+            <span class="font-semibold text-slate-800">${escapeHtml(c.subject)}</span>
+            <span class="text-slate-400 whitespace-nowrap">${formatDate(c.updatedAt)}</span>
+          </div>
+          <div class="text-slate-500 mt-0.5 truncate">${c.lastSender === "consultant" ? "Team: " : ""}${escapeHtml(c.lastMessage)}</div>
+          <div class="mt-1 text-[10px] ${c.status === "open" ? "text-amber-700 font-semibold" : "text-slate-400"}">
+            ${CONSULT_STATUS_LABELS[c.status] || escapeHtml(c.status)} · ${escapeHtml(c.patientName || c.patientEmail)}${c.consultantName ? " · with " + escapeHtml(c.consultantName) : ""}
+          </div>
+        </li>
+      `).join("");
+    }
+
+    function selectedConsultation() {
+      return consultations.find(c => c.id === selectedConsultId);
+    }
+
+    function renderConsultHeader() {
+      const c = selectedConsultation();
+      if (!c) return;
+      $("consult-header").innerHTML = `
+        <div class="font-semibold text-slate-900">${escapeHtml(c.subject)}</div>
+        <div class="text-xs text-slate-500">${escapeHtml(c.patientName)} · ${escapeHtml(c.patientEmail)} · ${CONSULT_STATUS_LABELS[c.status] || escapeHtml(c.status)}</div>`;
+      $("consult-close-btn").innerText = c.status === "closed" ? "Reopen consultation" : "Close consultation";
+      $("consult-reply").disabled = c.status === "closed";
+      $("consult-send-btn").disabled = c.status === "closed";
+    }
+
+    window.selectConsultation = (id) => {
+      selectedConsultId = id;
+      $("consult-status").innerText = "";
+      $("consult-reply-form").classList.remove("hidden");
+      renderConsultList();
+      renderConsultHeader();
+      if (unsubscribeMessages) unsubscribeMessages();
+      const q = query(collection(db, "consultations", id, "messages"), orderBy("createdAt", "asc"));
+      unsubscribeMessages = onSnapshot(q, (snap) => {
+        const box = $("consult-messages");
+        box.innerHTML = snap.docs.map(d => {
+          const m = d.data();
+          const fromPatient = m.sender === "patient";
+          return `
+            <div class="flex ${fromPatient ? "justify-start" : "justify-end"}">
+              <div class="max-w-[80%] rounded-xl px-3 py-2 ${fromPatient ? "bg-slate-100" : "bg-emerald-50 border border-emerald-100"}">
+                <div class="text-[10px] font-semibold ${fromPatient ? "text-slate-500" : "text-emerald-700"}">${escapeHtml(m.senderName || (fromPatient ? "User" : "Pharmacise team"))}</div>
+                <div class="whitespace-pre-wrap text-slate-800">${escapeHtml(m.text)}</div>
+                <div class="text-[10px] text-slate-400 text-right mt-1">${formatDate(m.createdAt)}</div>
+              </div>
+            </div>`;
+        }).join("") || `<div class="text-slate-400 text-center">No messages.</div>`;
+        box.scrollTop = box.scrollHeight;
+      }, (e) => {
+        $("consult-messages").innerHTML = `<div class="text-rose-600">${escapeHtml(friendlyError(e))}</div>`;
+      });
+    };
+
+    function consultantName() {
+      return (auth.currentUser?.displayName || session.email).slice(0, 100);
+    }
+
+    window.sendReply = async (e) => {
+      e.preventDefault();
+      const c = selectedConsultation();
+      const text = $("consult-reply").value.trim();
+      if (!c || !text) return;
+      $("consult-send-btn").disabled = true;
+      $("consult-status").innerText = "Sending…";
+      try {
+        // The message and the thread update are written together
+        const batch = writeBatch(db);
+        batch.set(doc(collection(db, "consultations", c.id, "messages")), {
+          sender: "consultant",
+          senderEmail: session.email,
+          senderName: consultantName(),
+          text: text.slice(0, 2000),
+          createdAt: serverTimestamp()
+        });
+        batch.update(doc(db, "consultations", c.id), {
+          status: "answered",
+          lastMessage: text.replace(/\s+/g, " ").slice(0, 200),
+          lastSender: "consultant",
+          consultantEmail: session.email,
+          consultantName: consultantName(),
+          updatedAt: serverTimestamp()
+        });
+        await batch.commit();
+        $("consult-reply").value = "";
+        $("consult-status").innerText = "Sent.";
+      } catch (err) {
+        $("consult-status").innerText = "Could not send: " + friendlyError(err);
+      } finally {
+        $("consult-send-btn").disabled = false;
+      }
+    };
+
+    window.toggleConsultClosed = async () => {
+      const c = selectedConsultation();
+      if (!c) return;
+      const closing = c.status !== "closed";
+      if (closing && !confirm("Close this consultation? The user can no longer reply to it.")) return;
+      try {
+        await updateDoc(doc(db, "consultations", c.id), {
+          status: closing ? "closed" : "answered",
+          updatedAt: serverTimestamp()
+        });
+      } catch (err) {
+        alert("Could not update: " + friendlyError(err));
+      }
     };
 
     // ---- App News (Firestore "news" collection, read by the Android app) ----
